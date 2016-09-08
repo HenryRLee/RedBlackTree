@@ -11,9 +11,9 @@ class rb_tree {
  public:
   typedef unsigned int size_type;
   class iterator;
- private:
-  struct rb_tree_node;
   typedef iterator const_iterator;
+ protected:
+  struct rb_tree_node;
   typedef rb_tree_node* node_ptr;
 
   typedef bool rb_tree_color;
@@ -59,7 +59,7 @@ class rb_tree {
 	node_ptr ptr_;
   };
 
- private:
+ protected:
   struct rb_tree_node {
 	T key;
     rb_tree_color color;
@@ -70,7 +70,6 @@ class rb_tree {
 	rb_tree_node(const T& val) : key(val) { }
   };
 
- protected:
   static const node_ptr nil = 0;
   node_ptr root_;
   size_type size_;
