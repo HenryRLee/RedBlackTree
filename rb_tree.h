@@ -104,10 +104,19 @@ class rb_tree {
 
  private:
   void Transplant(node_ptr u, node_ptr v);
-  void InsertNode(node_ptr z);
-  void DeleteNode(node_ptr z);
+
+  void LeftRotate(node_ptr x);
+  void RightRotate(node_ptr x);
+
+  void InsertFixup(node_ptr x);
+  void DeleteFixup(node_ptr x);
+
+  std::pair <node_ptr, bool> InsertNode(node_ptr x);
+  node_ptr DeleteNode(node_ptr x);
 
 };
+
+
 
 } // namespace rbtree
 
