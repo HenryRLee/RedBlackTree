@@ -31,12 +31,16 @@ class rb_tree {
   iterator find (const T& val);
 
   iterator begin();
+  const_iterator begin() const;
   iterator end();
+  const_iterator end() const;
   const_iterator cbegin() const;
   const_iterator cend() const;
 
   reverse_iterator rbegin();
+  const_reverse_iterator rbegin() const;
   reverse_iterator rend();
+  const_reverse_iterator rend() const;
   const_reverse_iterator crbegin() const;
   const_reverse_iterator crend() const;
 
