@@ -60,11 +60,11 @@ class rb_tree {
 	iterator operator--(int);
 
 	friend inline bool operator==(const iterator& x, const iterator& y) {
-		return x.ptr_ == y.ptr_;
+	  return x.ptr_ == y.ptr_;
 	}
 
 	friend inline bool operator!=(const iterator& x, const iterator& y) {
-		return !(x.ptr_ == y.ptr_);
+	  return !(x.ptr_ == y.ptr_);
 	}
 
    private:
