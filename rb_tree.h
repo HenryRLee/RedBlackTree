@@ -12,13 +12,13 @@ class rb_tree {
   typedef unsigned int size_type;
   class iterator;
   typedef iterator const_iterator;
+  class reverse_iterator;
+  typedef reverse_iterator const_reverse_iterator;
  protected:
   struct rb_tree_node;
   typedef rb_tree_node* node_ptr;
 
   typedef bool rb_tree_color;
-  static const rb_tree_color color_red = false;
-  static const rb_tree_color color_black = true;
 
  public:
   std::pair <iterator, bool> insert(const T& val);
@@ -28,18 +28,18 @@ class rb_tree {
   size_type erase(const T& val);
   iterator erase(const_iterator first, const_iterator last);
 
-  const_iterator find (const T& val) const;
+  iterator find (const T& val);
 
-  const_iterator begin() const;
-  const_iterator end() const;
+  iterator begin();
+  iterator end();
   const_iterator cbegin() const;
   const_iterator cend() const;
 
-  const_iterator rbegin() const;
-  const_iterator rend() const;
-  const_iterator crbegin() const;
-  const_iterator crend() const;
-  
+  reverse_iterator rbegin();
+  reverse_iterator rend();
+  const_reverse_iterator crbegin() const;
+  const_reverse_iterator crend() const;
+
   size_type size() const { return size_; }
   bool empty() const { return size_ == 0; }
 
@@ -55,8 +55,24 @@ class rb_tree {
 	iterator& operator--();
 	iterator operator--(int);
 
+	friend inline bool operator==(const iterator& x, const iterator& y) {
+		return x.ptr_ == y.ptr_;
+	}
+
+	friend inline bool operator!=(const iterator& x, const iterator& y) {
+		return !(x.ptr_ == y.ptr_);
+	}
+
    private:
 	node_ptr ptr_;
+  };
+
+  class reverse_iterator : public iterator {
+   public:
+	iterator& operator++() { return iterator::operator--(); }
+	iterator operator++(int x) { return iterator::operator--(x); }
+	iterator& operator--() { return iterator::operator++(); }
+	iterator operator--(int x) { return iterator::operator++(x); }
   };
 
  protected:
@@ -71,6 +87,8 @@ class rb_tree {
   };
 
   static const node_ptr nil = 0;
+  static const rb_tree_color color_red = false;
+  static const rb_tree_color color_black = true;
   node_ptr root_;
   size_type size_;
 
