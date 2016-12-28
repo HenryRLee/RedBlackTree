@@ -2,33 +2,50 @@
 #define RB_TREE_H
 
 #include <utility>
+#include <memory>
 
 namespace rb_tree {
 
-template <class T>
+template <class T,
+          class Compare = std::less<T>,
+          class Alloc = std::allocator<T> >
 class rb_tree {
 
  public:
-  typedef unsigned int size_type;
+  typedef T key_type;
+  typedef T value_type;
+  typedef Compare key_compare;
+  typedef Compare value_compare;
+  typedef Alloc allocator_type;
+  typedef value_type& reference;
+  typedef const value_type& const_reference;
+  typedef std::allocator_traits<allocator_type>::pointer pointer;
+  typedef std::allocator_traits<allocator_type>::const_pointer const_pointer;
   class iterator;
   typedef iterator const_iterator;
   class reverse_iterator;
   typedef reverse_iterator const_reverse_iterator;
+  typedef ptrdiff_t difference_type;
+  typedef size_t size_type;
+
  protected:
   struct rb_tree_node;
   typedef rb_tree_node* node_ptr;
 
   typedef bool rb_tree_color;
 
+  typedef std::allocator_traits<allocator_type> alloc_traits;
+  typedef typename alloc_traits::template rebind_traits<struct rb_tree_node> node_alloc_traits;
+
  public:
-  std::pair <iterator, bool> insert(const T& val);
-  iterator insert(const_iterator pos, const T& val);
+  std::pair <iterator, bool> insert(const value_type& val);
+  iterator insert(const_iterator pos, const value_type& val);
 
   iterator erase(const_iterator pos);
-  size_type erase(const T& val);
+  size_type erase(const key_type& val);
   iterator erase(const_iterator first, const_iterator last);
 
-  iterator find (const T& val);
+  iterator find (const key_type& val);
 
   iterator begin();
   const_iterator begin() const;
@@ -102,21 +119,20 @@ class rb_tree {
   static node_ptr SuccessorNode(node_ptr x);
   static node_ptr PredecessorNode(node_ptr x);
 
- private:
-  void Transplant(node_ptr u, node_ptr v);
+  std::pair <node_ptr, bool> InsertValue(node_ptr y, node_ptr z);
+  node_ptr DeleteValue(node_ptr x);
 
+ private:
+  std::pair <node_ptr, bool> InsertNode(node_ptr y, node_ptr z);
+  node_ptr DeleteNode(node_ptr x);
+
+  void Transplant(node_ptr u, node_ptr v);
   void LeftRotate(node_ptr x);
   void RightRotate(node_ptr x);
-
   void InsertFixup(node_ptr x);
   void DeleteFixup(node_ptr x);
 
-  std::pair <node_ptr, bool> InsertNode(node_ptr x);
-  node_ptr DeleteNode(node_ptr x);
-
 };
-
-
 
 } // namespace rbtree
 
