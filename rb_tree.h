@@ -163,21 +163,11 @@ class rb_tree {
   node_ptr end_;
   size_type size_;
 
-  static node_ptr MinimumNode(node_ptr x);
-  static node_ptr MaximumNode(node_ptr x);
-
-  static node_ptr SuccessorNode(node_ptr x);
-  static node_ptr PredecessorNode(node_ptr x);
+  static node_ptr min_node(node_ptr x);
+  static node_ptr max_node(node_ptr x);
 
  private:
-  void InsertFixup(node_ptr y, node_ptr z);
-  void DeleteNode(node_ptr x);
-
-  void Transplant(node_ptr u, node_ptr v);
-  void LeftRotate(node_ptr x);
-  void RightRotate(node_ptr x);
-  void DeleteFixup(node_ptr x);
-
+  void insert_fixup(node_ptr y, node_ptr z);
 };
 
 template <class T, class C, class A>
@@ -239,8 +229,8 @@ rb_tree<T, C, A>::insert(const value_type& val) {
 }
 
 template <class T, class C, class A>
-void rb_tree<T, C, A>::InsertFixup(typename rb_tree<T, C, A>::node_ptr y,
-                                   typename rb_tree<T, C, A>::node_ptr z) {
+void rb_tree<T, C, A>::insert_fixup(typename rb_tree<T, C, A>::node_ptr y,
+                                    typename rb_tree<T, C, A>::node_ptr z) {
   z->color = red_;
 
   return z;
