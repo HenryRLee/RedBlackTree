@@ -79,10 +79,10 @@ class rb_tree {
 
   class iterator {
    public:
-	const T& operator*() const { return ptr_->key; }
-	const T* operator->() const { return &(operator*()); }
+    const T& operator*() const { return ptr_->key; }
+    const T* operator->() const { return &(operator*()); }
 
-	iterator& operator++() {
+    iterator& operator++() {
       if (ptr_->right != nil) {
         ptr_ = ptr_->right;
         while (ptr_->left != nil) {
@@ -99,47 +99,47 @@ class rb_tree {
       return *this;
     }
 
-	iterator operator++(int) {
+    iterator operator++(int) {
       iterator tmp(ptr_);
       ++*this;
       return tmp;
     }
 
-	iterator& operator--();
-	iterator operator--(int);
+    iterator& operator--();
+    iterator operator--(int);
 
-	friend inline bool operator==(const iterator& x, const iterator& y) {
-	  return x.ptr_ == y.ptr_;
-	}
+    friend inline bool operator==(const iterator& x, const iterator& y) {
+      return x.ptr_ == y.ptr_;
+    }
 
-	friend inline bool operator!=(const iterator& x, const iterator& y) {
-	  return !(x.ptr_ == y.ptr_);
-	}
+    friend inline bool operator!=(const iterator& x, const iterator& y) {
+      return !(x.ptr_ == y.ptr_);
+    }
 
-	iterator() { }
-	iterator(node_ptr x) { ptr_ = x; }
+    iterator() { }
+    iterator(node_ptr x) { ptr_ = x; }
 
    private:
-	node_ptr ptr_;
+    node_ptr ptr_;
   };
 
   class reverse_iterator : public iterator {
    public:
-	iterator& operator++() { return iterator::operator--(); }
-	iterator operator++(int x) { return iterator::operator--(x); }
-	iterator& operator--() { return iterator::operator++(); }
-	iterator operator--(int x) { return iterator::operator++(x); }
+    iterator& operator++() { return iterator::operator--(); }
+    iterator operator++(int x) { return iterator::operator--(x); }
+    iterator& operator--() { return iterator::operator++(); }
+    iterator operator--(int x) { return iterator::operator++(x); }
   };
 
  protected:
   struct rb_tree_node {
-	value_type key;
+    value_type key;
     rb_tree_color color;
     node_ptr parent;
     node_ptr left;
     node_ptr right;
 
-	rb_tree_node(const value_type& val) : key(val) { }
+    rb_tree_node(const value_type& val) : key(val) { }
   };
 
   node_ptr root_;
