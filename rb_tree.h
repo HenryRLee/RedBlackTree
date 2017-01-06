@@ -19,15 +19,15 @@ class rb_tree {
   typedef Alloc allocator_type;
   typedef value_type& reference;
   typedef const value_type& const_reference;
+  typedef ptrdiff_t difference_type;
+  typedef size_t size_type;
   typedef typename std::allocator_traits<allocator_type>::pointer pointer;
   typedef typename std::allocator_traits<allocator_type>::const_pointer
     const_pointer;
   class iterator;
   typedef iterator const_iterator;
-  class reverse_iterator;
+  typedef std::reverse_iterator<iterator> reverse_iterator;
   typedef reverse_iterator const_reverse_iterator;
-  typedef ptrdiff_t difference_type;
-  typedef size_t size_type;
 
  protected:
   struct rb_tree_node;
@@ -57,15 +57,15 @@ class rb_tree {
   const_iterator begin() const { return iterator(begin_); }
   iterator end() { return iterator(end_); }
   const_iterator end() const { return iterator(end_); }
-  const_iterator cbegin() const;
-  const_iterator cend() const;
+  const_iterator cbegin() const { return const_iterator(begin_); }
+  const_iterator cend() const { return const_iterator(end_); }
 
-  reverse_iterator rbegin();
-  const_reverse_iterator rbegin() const;
-  reverse_iterator rend();
-  const_reverse_iterator rend() const;
-  const_reverse_iterator crbegin() const;
-  const_reverse_iterator crend() const;
+  reverse_iterator rbegin() { return reverse_iterator(end()); }
+  const_reverse_iterator rbegin() const { return reverse_iterator(end()); }
+  reverse_iterator rend() { return reverse_iterator(begin()); }
+  const_reverse_iterator rend() const { return reverse_iterator(begin()); }
+  const_reverse_iterator crbegin() const { return reverse_iterator(end_); }
+  const_reverse_iterator crend() const { return reverse_iterator(begin_); }
 
   size_type size() const { return size_; }
   bool empty() const { return size_ == 0; }
@@ -77,10 +77,14 @@ class rb_tree {
     end_->right = root_;
   }
 
-  class iterator {
+  class iterator : public std::iterator<std::bidirectional_iterator_tag,
+                                        value_type,
+                                        difference_type,
+                                        const_pointer,
+                                        const_reference> {
    public:
-    const T& operator*() const { return ptr_->key; }
-    const T* operator->() const { return &(operator*()); }
+    const value_type& operator*() const { return ptr_->key; }
+    const value_type* operator->() const { return &(operator*()); }
 
     iterator& operator++() {
       if (ptr_->right != nil) {
@@ -105,15 +109,35 @@ class rb_tree {
       return tmp;
     }
 
-    iterator& operator--();
-    iterator operator--(int);
-
-    friend inline bool operator==(const iterator& x, const iterator& y) {
-      return x.ptr_ == y.ptr_;
+    iterator& operator--() {
+      if (ptr_->left != nil) {
+        ptr_ = ptr_->left;
+        while (ptr_->right != nil) {
+          ptr_ = ptr_->right;
+        }
+      } else {
+        node_ptr tmp = ptr_->parent;
+        while (tmp->right != ptr_) {
+          ptr_ = tmp;
+          tmp = ptr_->parent;
+        }
+        ptr_ = tmp;
+      }
+      return *this;
     }
 
-    friend inline bool operator!=(const iterator& x, const iterator& y) {
-      return !(x.ptr_ == y.ptr_);
+    iterator operator--(int) {
+      iterator tmp(ptr_);
+      --*this;
+      return tmp;
+    }
+
+    inline bool operator==(const iterator& y) {
+      return this->ptr_ == y.ptr_;
+    }
+
+    inline bool operator!=(const iterator& y) {
+      return !(this->ptr_ == y.ptr_);
     }
 
     iterator() { }
@@ -121,14 +145,6 @@ class rb_tree {
 
    private:
     node_ptr ptr_;
-  };
-
-  class reverse_iterator : public iterator {
-   public:
-    iterator& operator++() { return iterator::operator--(); }
-    iterator operator++(int x) { return iterator::operator--(x); }
-    iterator& operator--() { return iterator::operator++(); }
-    iterator operator--(int x) { return iterator::operator++(x); }
   };
 
  protected:
