@@ -70,11 +70,11 @@ class rb_tree {
   size_type size() const { return size_; }
   bool empty() const { return size_ == 0; }
 
-  rb_tree() : root_(nil), begin_(nil), size_(0) {
+  rb_tree() : begin_(nil), size_(0) {
     end_ = node_alloc_traits::allocate(alloc_, 1);
     end_->parent = end_;
-    end_->left = root_;
-    end_->right = root_;
+    end_->left = nil;
+    end_->right = nil;
   }
 
   class iterator : public std::iterator<std::bidirectional_iterator_tag,
@@ -158,28 +158,40 @@ class rb_tree {
     rb_tree_node(const value_type& val) : key(val) { }
   };
 
-  node_ptr root_;
+  /*
+   * Both children of the end_ node point to the root node, and the parent
+   * of the root node should always point to the end_ node.
+   * Consequently, incrementing the rightmost node and decrementing the leftmost
+   * node ends up with the end_ node.
+   */
   node_ptr begin_;
   node_ptr end_;
+  node_ptr root() { return end_->left; }
+
   size_type size_;
+
+  node_ptr create_node() { return node_alloc_traits::allocate(alloc_, 1); }
+
+  node_ptr create_node(const value_type& val) {
+    node_ptr z = node_alloc_traits::allocate(alloc_, 1);
+    z->key = val;
+    z->left = nil;
+    z->right = nil;
+    return z;
+  }
 
   static node_ptr min_node(node_ptr x);
   static node_ptr max_node(node_ptr x);
 
- private:
   void insert_fixup(node_ptr y, node_ptr z);
+ private:
 };
 
 template <class T, class C, class A>
 std::pair <typename rb_tree<T, C, A>::iterator, bool>
 rb_tree<T, C, A>::insert(const value_type& val) {
-  node_ptr z = node_alloc_traits::allocate(alloc_, 1);
-  node_ptr x = root_;
+  node_ptr x = root();
   node_ptr y = end_;
-
-  z->key = val;
-  z->left = nil;
-  z->right = nil;
 
   ++size_;
 
@@ -193,38 +205,58 @@ rb_tree<T, C, A>::insert(const value_type& val) {
 
   node_ptr j = y;
   if (comp) {
-    y->left = z;
-    z->parent = y;
-
     if (y == begin_) {
       /* begin */
+      node_ptr z = create_node(val);
+
       begin_ = z;
+      y->left = z;
+      z->parent = y;
 
       return std::pair<iterator, bool>(iterator(z), true);
     } else if (y == end_) {
       /* root */
-      root_ = z;
-      y->right = z;
+      node_ptr z = create_node(val);
+
       begin_ = z;
+      y->right = z;
+      y->left = z;
+      z->parent = y;
 
       return std::pair<iterator, bool>(iterator(z), true);
     } else {
       /* decrement j */
       node_ptr tmp = j->parent;
-      while (j == tmp->left) {
+      while (j != tmp->right) {
         j = tmp;
         tmp = j->parent;
       }
+      j = tmp;
+
+      /* check duplicate */
+      if (comp_(j->key, val)) {
+        node_ptr z = create_node(val);
+        y->left = z;
+        z->parent = y;
+
+        return std::pair<iterator, bool>(iterator(z), true);
+      } else {
+        return std::pair<iterator, bool>(iterator(j), false);
+      }
     }
-  } else {
-    y->right = z;
-    z->parent = y;
+
   }
 
-  if (comp_(j->key, val))
+  /* check duplicate */
+  if (comp_(j->key, val)) {
+    node_ptr z = create_node(val);
+    y->right = z;
+    z->parent = y;
+
     return std::pair<iterator, bool>(iterator(z), true);
-  else
+  } else {
     return std::pair<iterator, bool>(iterator(j), false);
+  }
 
 }
 
