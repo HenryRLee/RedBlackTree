@@ -75,6 +75,7 @@ class rb_tree {
     end_->parent = end_;
     end_->left = nil;
     end_->right = nil;
+    end_->color = black_;
   }
 
   class iterator : public std::iterator<std::bidirectional_iterator_tag,
@@ -180,11 +181,15 @@ class rb_tree {
     return z;
   }
 
+  std::pair <iterator, bool> insert_unqiue(const value_type& val);
+
   static node_ptr min_node(node_ptr x);
   static node_ptr max_node(node_ptr x);
 
-  void insert_fixup(node_ptr y, node_ptr z);
-  std::pair <iterator, bool> insert_unqiue(const value_type& val);
+  void left_rotate(node_ptr x);
+  void right_rotate(node_ptr x);
+
+  void insert_fixup(node_ptr z);
 };
 
 template <class T, class C, class A>
@@ -221,6 +226,7 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
       y->left = z;
       z->parent = y;
 
+      insert_fixup(z);
       return std::pair<iterator, bool>(iterator(z), true);
     } else if (y == end_) {
       /* root */
@@ -231,6 +237,7 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
       y->left = z;
       z->parent = y;
 
+      insert_fixup(z);
       return std::pair<iterator, bool>(iterator(z), true);
     } else {
       /* decrement j */
@@ -246,6 +253,7 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
         y->left = z;
         z->parent = y;
 
+        insert_fixup(z);
         return std::pair<iterator, bool>(iterator(z), true);
       } else {
         /* duplicate */
@@ -260,6 +268,7 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
       y->right = z;
       z->parent = y;
 
+      insert_fixup(z);
       return std::pair<iterator, bool>(iterator(z), true);
     } else {
       /* duplicate */
@@ -270,11 +279,100 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
 }
 
 template <class T, class C, class A>
-void rb_tree<T, C, A>::insert_fixup(typename rb_tree<T, C, A>::node_ptr y,
-                                    typename rb_tree<T, C, A>::node_ptr z) {
+void rb_tree<T, C, A>::left_rotate(typename rb_tree<T, C, A>::node_ptr x) {
+  node_ptr y = x->right;
+
+  x->right = y->left;
+  if (y->left != nil)
+    y->left->parent = x;
+
+  y->parent = x->parent;
+
+  if (x->parent == end_) {
+    /* root */
+    end_->left = y;
+    end_->right = y;
+  } else if (x == x->parent->left) {
+    x->parent->left = y;
+  } else {
+    x->parent->right = y;
+  }
+
+  y->left = x;
+  x->parent = y;
+}
+
+template <class T, class C, class A>
+void rb_tree<T, C, A>::right_rotate(typename rb_tree<T, C, A>::node_ptr x) {
+  node_ptr y = x->left;
+
+  x->left = y->right;
+  if (y->right != nil)
+    y->right->parent = x;
+
+  y->parent = x->parent;
+
+  if (x->parent == end_) {
+    /* root */
+    end_->left = y;
+    end_->right = y;
+  } else if (x == x->parent->right) {
+    x->parent->right = y;
+  } else {
+    x->parent->left = y;
+  }
+
+  y->right = x;
+  x->parent = y;
+}
+
+template <class T, class C, class A>
+void rb_tree<T, C, A>::insert_fixup(typename rb_tree<T, C, A>::node_ptr z) {
+  node_ptr y;
+
   z->color = red_;
 
-  return z;
+  while (z->parent->color == red_) {
+    if (z->parent == z->parent->parent->left) {
+      y = z->parent->parent->right;
+
+      if (y != nil && y->color == red_) {
+        z->parent->color = black_;
+        y->color = black_;
+        z->parent->parent->color = red_;
+        z = z->parent->parent;
+      } else {
+        if (z == z->parent->right) {
+          z = z->parent;
+          left_rotate(z);
+        }
+        z->parent->color = black_;
+        z->parent->parent->color = red_;
+
+        right_rotate(z->parent->parent);
+      }
+    } else {
+      y = z->parent->parent->left;
+
+      if (y != nil && y->color == red_) {
+        z->parent->color = black_;
+        y->color = black_;
+        z->parent->parent->color = red_;
+        z = z->parent->parent;
+      } else {
+        if (z == z->parent->left) {
+          z = z->parent;
+          right_rotate(z);
+        }
+        z->parent->color = black_;
+        z->parent->parent->color = red_;
+
+        left_rotate(z->parent->parent);
+      }
+    }
+  }
+
+  root()->color = black_;
 }
 
 
