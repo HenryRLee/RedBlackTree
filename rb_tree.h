@@ -184,12 +184,18 @@ class rb_tree {
   static node_ptr max_node(node_ptr x);
 
   void insert_fixup(node_ptr y, node_ptr z);
- private:
+  std::pair <iterator, bool> insert_unqiue(const value_type& val);
 };
 
 template <class T, class C, class A>
 std::pair <typename rb_tree<T, C, A>::iterator, bool>
 rb_tree<T, C, A>::insert(const value_type& val) {
+  return insert_unqiue(val);
+}
+
+template <class T, class C, class A>
+std::pair <typename rb_tree<T, C, A>::iterator, bool>
+rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
   node_ptr x = root();
   node_ptr y = end_;
 
@@ -205,6 +211,8 @@ rb_tree<T, C, A>::insert(const value_type& val) {
 
   node_ptr j = y;
   if (comp) {
+    /* left */
+
     if (y == begin_) {
       /* begin */
       node_ptr z = create_node(val);
@@ -233,7 +241,6 @@ rb_tree<T, C, A>::insert(const value_type& val) {
       }
       j = tmp;
 
-      /* check duplicate */
       if (comp_(j->key, val)) {
         node_ptr z = create_node(val);
         y->left = z;
@@ -241,21 +248,23 @@ rb_tree<T, C, A>::insert(const value_type& val) {
 
         return std::pair<iterator, bool>(iterator(z), true);
       } else {
+        /* duplicate */
         return std::pair<iterator, bool>(iterator(j), false);
       }
     }
-
-  }
-
-  /* check duplicate */
-  if (comp_(j->key, val)) {
-    node_ptr z = create_node(val);
-    y->right = z;
-    z->parent = y;
-
-    return std::pair<iterator, bool>(iterator(z), true);
   } else {
-    return std::pair<iterator, bool>(iterator(j), false);
+    /* right */
+
+    if (comp_(j->key, val)) {
+      node_ptr z = create_node(val);
+      y->right = z;
+      z->parent = y;
+
+      return std::pair<iterator, bool>(iterator(z), true);
+    } else {
+      /* duplicate */
+      return std::pair<iterator, bool>(iterator(j), false);
+    }
   }
 
 }
