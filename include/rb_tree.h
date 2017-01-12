@@ -158,6 +158,10 @@ class rb_tree {
     return z;
   }
 
+  void remove_node(node_ptr x) {
+    node_alloc_traits::deallocate(alloc_, x, 1);
+  }
+
   std::pair <iterator, bool> insert_unqiue(const value_type& val);
 
   static node_ptr min_node(node_ptr x) {
@@ -457,7 +461,7 @@ void rb_tree<T, C, A>::erase_node(node_ptr z) {
     y->left->parent = y;
   }
 
-  node_alloc_traits::deallocate(alloc_, z, 1);
+  remove_node(z);
 }
 
 } // namespace rbtree
