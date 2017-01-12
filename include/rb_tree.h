@@ -88,19 +88,7 @@ class rb_tree {
     const value_type* operator->() const { return &(operator*()); }
 
     iterator& operator++() {
-      if (ptr_->right != nil) {
-        ptr_ = ptr_->right;
-        while (ptr_->left != nil) {
-          ptr_ = ptr_->left;
-        }
-      } else {
-        node_ptr tmp = ptr_->parent;
-        while (tmp->left != ptr_) {
-          ptr_ = tmp;
-          tmp = ptr_->parent;
-        }
-        ptr_ = tmp;
-      }
+      ptr_ = next_node(ptr_);
       return *this;
     }
 
@@ -111,19 +99,7 @@ class rb_tree {
     }
 
     iterator& operator--() {
-      if (ptr_->left != nil) {
-        ptr_ = ptr_->left;
-        while (ptr_->right != nil) {
-          ptr_ = ptr_->right;
-        }
-      } else {
-        node_ptr tmp = ptr_->parent;
-        while (tmp->right != ptr_) {
-          ptr_ = tmp;
-          tmp = ptr_->parent;
-        }
-        ptr_ = tmp;
-      }
+      ptr_ = prev_node(ptr_);
       return *this;
     }
 
@@ -146,6 +122,7 @@ class rb_tree {
 
    private:
     node_ptr ptr_;
+    friend class rb_tree;
   };
 
  protected:
@@ -183,11 +160,56 @@ class rb_tree {
 
   std::pair <iterator, bool> insert_unqiue(const value_type& val);
 
-  static node_ptr min_node(node_ptr x);
-  static node_ptr max_node(node_ptr x);
+  static node_ptr min_node(node_ptr x) {
+    while (x->left != nil)
+      x = x->left;
+    return x;
+  }
+
+  static node_ptr max_node(node_ptr x) {
+    while (x->right != nil)
+      x = x->right;
+    return x;
+  }
+
+  static node_ptr next_node(node_ptr x) {
+    if (x->right != nil) {
+      x = x->right;
+      while (x->left != nil) {
+        x = x->left;
+      }
+    } else {
+      node_ptr tmp = x->parent;
+      while (tmp->left != x) {
+        x = tmp;
+        tmp = x->parent;
+      }
+      x = tmp;
+    }
+    return x;
+  }
+
+  static node_ptr prev_node(node_ptr x) {
+    if (x->left != nil) {
+      x = x->left;
+      while (x->right != nil) {
+        x = x->right;
+      }
+    } else {
+      node_ptr tmp = x->parent;
+      while (tmp->right != x) {
+        x = tmp;
+        tmp = x->parent;
+      }
+      x = tmp;
+    }
+    return x;
+  }
 
   void left_rotate(node_ptr x);
   void right_rotate(node_ptr x);
+  void transplant(node_ptr u, node_ptr v);
+  void erase_node(node_ptr z);
 
   void insert_fixup(node_ptr z);
 };
@@ -199,12 +221,26 @@ rb_tree<T, C, A>::insert(const value_type& val) {
 }
 
 template <class T, class C, class A>
+typename rb_tree<T, C, A>::iterator
+rb_tree<T, C, A>::erase(const_iterator pos) {
+  if (pos == iterator(end_))
+    return end();
+
+  iterator next = pos;
+  ++next;
+
+  --size_;
+
+  erase_node(pos.ptr_);
+
+  return next;
+}
+
+template <class T, class C, class A>
 std::pair <typename rb_tree<T, C, A>::iterator, bool>
 rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
   node_ptr x = root();
   node_ptr y = end_;
-
-  ++size_;
 
   bool comp = true;
 
@@ -221,6 +257,7 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
     if (y == begin_) {
       /* begin */
       node_ptr z = create_node(val);
+      ++size_;
 
       begin_ = z;
       y->left = z;
@@ -231,6 +268,7 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
     } else if (y == end_) {
       /* root */
       node_ptr z = create_node(val);
+      ++size_;
 
       begin_ = z;
       y->right = z;
@@ -250,6 +288,8 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
 
       if (comp_(j->key, val)) {
         node_ptr z = create_node(val);
+        ++size_;
+
         y->left = z;
         z->parent = y;
 
@@ -265,6 +305,8 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
 
     if (comp_(j->key, val)) {
       node_ptr z = create_node(val);
+      ++size_;
+
       y->right = z;
       z->parent = y;
 
@@ -327,6 +369,23 @@ void rb_tree<T, C, A>::right_rotate(typename rb_tree<T, C, A>::node_ptr x) {
 }
 
 template <class T, class C, class A>
+void rb_tree<T, C, A>::transplant(typename rb_tree<T, C, A>::node_ptr u,
+                                  typename rb_tree<T, C, A>::node_ptr v) {
+  if (u->parent == end_) {
+    /* root */
+    end_->left = v;
+    end_->right = v;
+  } else if (u == u->parent->left) {
+    u->parent->left = v;
+  } else {
+    u->parent->right = v;
+  }
+
+  if (v != nil)
+    v->parent = u->parent;
+}
+
+template <class T, class C, class A>
 void rb_tree<T, C, A>::insert_fixup(typename rb_tree<T, C, A>::node_ptr z) {
   node_ptr y;
 
@@ -375,6 +434,31 @@ void rb_tree<T, C, A>::insert_fixup(typename rb_tree<T, C, A>::node_ptr z) {
   root()->color = black_;
 }
 
+template <class T, class C, class A>
+void rb_tree<T, C, A>::erase_node(node_ptr z) {
+
+  if (z->left == nil) {
+    if (z == begin_)
+      begin_ = next_node(z);
+    transplant(z, z->right);
+  } else if (z->right == nil) {
+    transplant(z, z->left);
+  } else {
+    node_ptr y;
+    y = min_node(z->right);
+
+    if (y->parent != z) {
+      transplant(y, y->right);
+      y->right = z->right;
+      y->right->parent = y;
+    }
+    transplant(z, y);
+    y->left = z->left;
+    y->left->parent = y;
+  }
+
+  node_alloc_traits::deallocate(alloc_, z, 1);
+}
 
 } // namespace rbtree
 
