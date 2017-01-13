@@ -158,7 +158,7 @@ class rb_tree {
     return z;
   }
 
-  void remove_node(node_ptr x) {
+  void destroy_node(node_ptr x) {
     node_alloc_traits::deallocate(alloc_, x, 1);
   }
 
@@ -530,7 +530,7 @@ void rb_tree<T, C, A>::erase_node(node_ptr z) {
   if (ycolor == black_)
     erase_fixup(x);
 
-  remove_node(z);
+  destroy_node(z);
 }
 
 } // namespace rbtree
