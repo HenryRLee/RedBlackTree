@@ -34,7 +34,7 @@ class rb_tree {
   typedef rb_tree_node* node_ptr;
 
   enum rb_tree_color { red_, black_ };
-  static constexpr node_ptr nil = 0;
+  static constexpr node_ptr nil_ = 0;
 
   typedef std::allocator_traits<allocator_type> alloc_traits;
   typedef typename alloc_traits::template rebind_traits<struct rb_tree_node>
@@ -70,11 +70,11 @@ class rb_tree {
   size_type size() const { return size_; }
   bool empty() const { return size_ == 0; }
 
-  rb_tree() : begin_(nil), size_(0) {
+  rb_tree() : begin_(nil_), size_(0) {
     end_ = node_alloc_traits::allocate(alloc_, 1);
     end_->parent = end_;
-    end_->left = nil;
-    end_->right = nil;
+    end_->left = nil_;
+    end_->right = nil_;
     end_->color = black_;
   }
 
@@ -153,8 +153,8 @@ class rb_tree {
   node_ptr create_node(const value_type& val) {
     node_ptr z = node_alloc_traits::allocate(alloc_, 1);
     z->key = val;
-    z->left = nil;
-    z->right = nil;
+    z->left = nil_;
+    z->right = nil_;
     return z;
   }
 
@@ -165,21 +165,21 @@ class rb_tree {
   std::pair <iterator, bool> insert_unqiue(const value_type& val);
 
   static node_ptr min_node(node_ptr x) {
-    while (x->left != nil)
+    while (x->left != nil_)
       x = x->left;
     return x;
   }
 
   static node_ptr max_node(node_ptr x) {
-    while (x->right != nil)
+    while (x->right != nil_)
       x = x->right;
     return x;
   }
 
   static node_ptr next_node(node_ptr x) {
-    if (x->right != nil) {
+    if (x->right != nil_) {
       x = x->right;
-      while (x->left != nil) {
+      while (x->left != nil_) {
         x = x->left;
       }
     } else {
@@ -194,9 +194,9 @@ class rb_tree {
   }
 
   static node_ptr prev_node(node_ptr x) {
-    if (x->left != nil) {
+    if (x->left != nil_) {
       x = x->left;
-      while (x->right != nil) {
+      while (x->right != nil_) {
         x = x->right;
       }
     } else {
@@ -249,7 +249,7 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
 
   bool comp = true;
 
-  while (x != nil) {
+  while (x != nil_) {
     y = x;
     comp = comp_(val, x->key);
     x = comp ? x->left : x->right;
@@ -330,7 +330,7 @@ void rb_tree<T, C, A>::left_rotate(typename rb_tree<T, C, A>::node_ptr x) {
   node_ptr y = x->right;
 
   x->right = y->left;
-  if (y->left != nil)
+  if (y->left != nil_)
     y->left->parent = x;
 
   y->parent = x->parent;
@@ -354,7 +354,7 @@ void rb_tree<T, C, A>::right_rotate(typename rb_tree<T, C, A>::node_ptr x) {
   node_ptr y = x->left;
 
   x->left = y->right;
-  if (y->right != nil)
+  if (y->right != nil_)
     y->right->parent = x;
 
   y->parent = x->parent;
@@ -386,7 +386,7 @@ void rb_tree<T, C, A>::transplant(typename rb_tree<T, C, A>::node_ptr u,
     u->parent->right = v;
   }
   
-  if (v != nil)
+  if (v != nil_)
     v->parent = u->parent;
 }
 
@@ -400,7 +400,7 @@ void rb_tree<T, C, A>::insert_fixup(typename rb_tree<T, C, A>::node_ptr z) {
     if (z->parent == z->parent->parent->left) {
       y = z->parent->parent->right;
 
-      if (y != nil && y->color == red_) {
+      if (y != nil_ && y->color == red_) {
         z->parent->color = black_;
         y->color = black_;
         z->parent->parent->color = red_;
@@ -418,7 +418,7 @@ void rb_tree<T, C, A>::insert_fixup(typename rb_tree<T, C, A>::node_ptr z) {
     } else {
       y = z->parent->parent->left;
 
-      if (y != nil && y->color == red_) {
+      if (y != nil_ && y->color == red_) {
         z->parent->color = black_;
         y->color = black_;
         z->parent->parent->color = red_;
@@ -501,12 +501,12 @@ void rb_tree<T, C, A>::erase_node(node_ptr z) {
   node_ptr y = z;
   int ycolor = y->color;
 
-  if (z->left == nil) {
+  if (z->left == nil_) {
     x = z->right;
     if (z == begin_)
       begin_ = next_node(z);
     transplant(z, z->right);
-  } else if (z->right == nil) {
+  } else if (z->right == nil_) {
     x = z->left;
     transplant(z, z->left);
   } else {
