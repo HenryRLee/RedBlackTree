@@ -326,7 +326,7 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
 }
 
 template <class T, class C, class A>
-void rb_tree<T, C, A>::left_rotate(typename rb_tree<T, C, A>::node_ptr x) {
+void rb_tree<T, C, A>::left_rotate(node_ptr x) {
   node_ptr y = x->right;
 
   x->right = y->left;
@@ -350,7 +350,7 @@ void rb_tree<T, C, A>::left_rotate(typename rb_tree<T, C, A>::node_ptr x) {
 }
 
 template <class T, class C, class A>
-void rb_tree<T, C, A>::right_rotate(typename rb_tree<T, C, A>::node_ptr x) {
+void rb_tree<T, C, A>::right_rotate(node_ptr x) {
   node_ptr y = x->left;
 
   x->left = y->right;
@@ -374,8 +374,7 @@ void rb_tree<T, C, A>::right_rotate(typename rb_tree<T, C, A>::node_ptr x) {
 }
 
 template <class T, class C, class A>
-void rb_tree<T, C, A>::transplant(typename rb_tree<T, C, A>::node_ptr u,
-                                  typename rb_tree<T, C, A>::node_ptr v) {
+void rb_tree<T, C, A>::transplant(node_ptr u, node_ptr v) {
   if (u->parent == end_) {
     /* root */
     end_->left = v;
@@ -391,7 +390,7 @@ void rb_tree<T, C, A>::transplant(typename rb_tree<T, C, A>::node_ptr u,
 }
 
 template <class T, class C, class A>
-void rb_tree<T, C, A>::insert_fixup(typename rb_tree<T, C, A>::node_ptr z) {
+void rb_tree<T, C, A>::insert_fixup(node_ptr z) {
   node_ptr y;
 
   z->color = red_;
@@ -440,7 +439,7 @@ void rb_tree<T, C, A>::insert_fixup(typename rb_tree<T, C, A>::node_ptr z) {
 }
 
 template <class T, class C, class A>
-void rb_tree<T, C, A>::erase_fixup(typename rb_tree<T, C, A>::node_ptr x) {
+void rb_tree<T, C, A>::erase_fixup(node_ptr x) {
   while (x != root() && x->color == black_) {
     if (x == x->parent->left) {
       node_ptr w = x->parent->right;
