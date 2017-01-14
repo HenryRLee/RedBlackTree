@@ -492,8 +492,8 @@ void rb_tree<T, C, A>::erase_fixup(node_ptr x, node_ptr xparent) {
         }
         w->color = xparent->color;
         xparent->color = black_;
-        if (x->left != nil_)
-          x->left->color = black_;
+        if (w->left != nil_)
+          w->left->color = black_;
         right_rotate(xparent);
         x = root();
       }
