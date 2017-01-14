@@ -216,7 +216,7 @@ class rb_tree {
   void erase_node(node_ptr z);
 
   void insert_fixup(node_ptr z);
-  void erase_fixup(node_ptr x);
+  void erase_fixup(node_ptr x, node_ptr xparent);
 };
 
 template <class T, class C, class A>
@@ -439,64 +439,74 @@ void rb_tree<T, C, A>::insert_fixup(node_ptr z) {
 }
 
 template <class T, class C, class A>
-void rb_tree<T, C, A>::erase_fixup(node_ptr x) {
-  while (x != root() && x->color == black_) {
-    if (x == x->parent->left) {
-      node_ptr w = x->parent->right;
+void rb_tree<T, C, A>::erase_fixup(node_ptr x, node_ptr xparent) {
+  while (x != root() && (x == nil_ || x->color == black_)) {
+    if (x == xparent->left) {
+      node_ptr w = xparent->right;
       if (w->color == red_) {
         w->color = black_;
-        x->parent->color = red_;
-        left_rotate(x->parent);
-        w = x->parent->right;
+        xparent->color = red_;
+        left_rotate(xparent);
+        w = xparent->right;
       }
-      if (w->left->color == black_ && w->right->color == black_) {
+      if ((w->left == nil_ || w->left->color == black_) && 
+          (w->right == nil_ || w->right->color == black_)) {
         w->color = red_;
-        x = x->parent;
+        x = xparent;
+        xparent = xparent->parent;
       } else {
-        if (w->right->color == black_) {
-          w->left->color = black_;
+        if (w->right == nil_ || w->right->color == black_) {
+          if (w->left != nil_)
+            w->left->color = black_;
           w->color = red_;
           right_rotate(w);
-          w = x->parent->right;
+          w = xparent->right;
         }
-        w->color = x->parent->color;
-        x->parent->color = black_;
-        w->right->color = black_;
-        left_rotate(x->parent);
+        w->color = xparent->color;
+        xparent->color = black_;
+        if (w->right != nil_)
+          w->right->color = black_;
+        left_rotate(xparent);
         x = root();
       }
     } else {
-      node_ptr w = x->parent->left;
+      node_ptr w = xparent->left;
       if (w->color == red_) {
         w->color = black_;
-        x->parent->color = red_;
-        right_rotate(x->parent);
-        w = x->parent->left;
+        xparent->color = red_;
+        right_rotate(xparent);
+        w = xparent->left;
       }
-      if (w->right->color == black_ && w->left->color == black_) {
+      if ((w->left == nil_ || w->left->color == black_) && 
+          (w->right == nil_ || w->right->color == black_)) {
         w->color = red_;
-        x = x->parent;
+        x = xparent;
+        xparent = xparent->parent;
       } else {
-        if (w->left->color == black_) {
-          w->right->color = black_;
+        if (w->left == nil_ || w->left->color == black_) {
+          if (w->right != nil_)
+            w->right->color = black_;
           w->color = red_;
           left_rotate(w);
-          w = x->parent->left;
+          w = xparent->left;
         }
-        w->color = x->parent->color;
-        x->parent->color = black_;
-        x->left->color = black_;
-        right_rotate(x->parent);
+        w->color = xparent->color;
+        xparent->color = black_;
+        if (x->left != nil_)
+          x->left->color = black_;
+        right_rotate(xparent);
         x = root();
       }
     }
   }
-  x->color = black_;
+  if (x != nil_)
+    x->color = black_;
 }
 
 template <class T, class C, class A>
 void rb_tree<T, C, A>::erase_node(node_ptr z) {
   node_ptr x;
+  node_ptr xparent;
   node_ptr y = z;
   int ycolor = y->color;
 
@@ -505,20 +515,22 @@ void rb_tree<T, C, A>::erase_node(node_ptr z) {
     if (z == begin_)
       begin_ = next_node(z);
     transplant(z, z->right);
+    xparent = y->parent;
   } else if (z->right == nil_) {
     x = z->left;
     transplant(z, z->left);
+    xparent = y->parent;
   } else {
     y = min_node(z->right);
     ycolor = y->color;
     x = y->right;
-
     if (y->parent != z) {
       transplant(y, y->right);
       y->right = z->right;
       y->right->parent = y;
+      xparent = y->parent;
     } else {
-      x->parent = y;
+      xparent = y;
     }
     transplant(z, y);
     y->left = z->left;
@@ -527,7 +539,7 @@ void rb_tree<T, C, A>::erase_node(node_ptr z) {
   }
 
   if (ycolor == black_)
-    erase_fixup(x);
+    erase_fixup(x, xparent);
 
   destroy_node(z);
 }
