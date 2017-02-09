@@ -70,12 +70,13 @@ class rb_tree {
   size_type size() const { return size_; }
   bool empty() const { return size_ == 0; }
 
-  rb_tree() : begin_(nil_), size_(0) {
+  rb_tree() : size_(0) {
     end_ = node_alloc_traits::allocate(alloc_, 1);
     end_->parent = end_;
     end_->left = nil_;
     end_->right = nil_;
     end_->color = black_;
+    begin_ = end_;
   }
 
   class iterator : public std::iterator<std::bidirectional_iterator_tag,
@@ -123,7 +124,7 @@ class rb_tree {
    private:
     node_ptr ptr_;
     friend class rb_tree;
-  };
+  }; // iterator
 
  protected:
   struct rb_tree_node {
@@ -134,7 +135,7 @@ class rb_tree {
     node_ptr right;
 
     rb_tree_node(const value_type& val) : key(val) { }
-  };
+  }; // rb_tree_node
 
   /*
    * Both children of the end_ node point to the root node, and the parent
@@ -162,7 +163,8 @@ class rb_tree {
     node_alloc_traits::deallocate(alloc_, x, 1);
   }
 
-  std::pair <iterator, bool> insert_unqiue(const value_type& val);
+  std::pair <iterator, bool> insert_unique(const value_type& val);
+  iterator insert_unique(node_ptr pos, const value_type& val);
 
   static node_ptr min_node(node_ptr x) {
     while (x->left != nil_)
@@ -222,7 +224,13 @@ class rb_tree {
 template <class T, class C, class A>
 std::pair <typename rb_tree<T, C, A>::iterator, bool>
 rb_tree<T, C, A>::insert(const value_type& val) {
-  return insert_unqiue(val);
+  return insert_unique(val);
+}
+
+template <class T, class C, class A>
+typename rb_tree<T, C, A>::iterator
+rb_tree<T, C, A>::insert(const_iterator pos, const value_type& val) {
+  return insert_unique(pos.ptr_, val);
 }
 
 template <class T, class C, class A>
@@ -243,7 +251,7 @@ rb_tree<T, C, A>::erase(const_iterator pos) {
 
 template <class T, class C, class A>
 std::pair <typename rb_tree<T, C, A>::iterator, bool>
-rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
+rb_tree<T, C, A>::insert_unique(const value_type& val) {
   node_ptr x = root();
   node_ptr y = end_;
 
@@ -259,24 +267,24 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
   if (comp) {
     /* left */
 
-    if (y == begin_) {
-      /* begin */
-      node_ptr z = create_node(val);
-      ++size_;
-
-      begin_ = z;
-      y->left = z;
-      z->parent = y;
-
-      insert_fixup(z);
-      return std::pair<iterator, bool>(iterator(z), true);
-    } else if (y == end_) {
+    if (y == end_) {
       /* root */
       node_ptr z = create_node(val);
       ++size_;
 
       begin_ = z;
-      y->right = z;
+      end_->left = z;
+      end_->right = z;
+      z->parent = end_;
+
+      insert_fixup(z);
+      return std::pair<iterator, bool>(iterator(z), true);
+    } else if (y == begin_) {
+      /* begin */
+      node_ptr z = create_node(val);
+      ++size_;
+
+      begin_ = z;
       y->left = z;
       z->parent = y;
 
@@ -323,6 +331,89 @@ rb_tree<T, C, A>::insert_unqiue(const value_type& val) {
     }
   }
 
+}
+
+template <class T, class C, class A>
+typename rb_tree<T, C, A>::iterator
+rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
+  if (pos == end_) {
+    if (pos == begin_) {
+      /* root */
+      node_ptr z = create_node(val);
+      ++size_;
+
+      begin_ = z;
+      end_->left = z;
+      end_->right = z;
+      z->parent = end_;
+
+      insert_fixup(z);
+      return iterator(z);
+    } else {
+      node_ptr prev = prev_node(pos);
+
+      if (comp_(prev->key, val)) {
+        /* the right most node should have no right child */
+        node_ptr z = create_node(val);
+        ++size_;
+
+        prev->right = z;
+        z->parent = prev;
+
+        insert_fixup(z);
+        return iterator(z);
+      } else {
+        /* incorrect hint */
+        return insert_unique(val).first;
+      }
+    }
+  } else if (pos == begin_) {
+    if (comp_(val, pos->key)) {
+      /* begin */
+      node_ptr z = create_node(val);
+      ++size_;
+
+      begin_->left = z;
+      z->parent = begin_;
+      begin_ = z;
+
+      insert_fixup(z);
+      return iterator(z);
+    } else {
+      /* incorrect hint */
+      return insert_unique(val).first;
+    }
+  } else {
+    node_ptr prev = prev_node(pos);
+
+    if (comp_(prev->key, val) && comp_(val, pos->key)) {
+      // prev < val < pos
+      if (prev->right == nil_) {
+        /* prev has no right child */
+        node_ptr z = create_node(val);
+        ++size_;
+
+        prev->right = z;
+        z->parent = prev;
+
+        insert_fixup(z);
+        return iterator(z);
+      } else {
+        /* prev has a right child, then the left child of pos is nil */
+        node_ptr z = create_node(val);
+        ++size_;
+
+        pos->left = z;
+        z->parent = pos;
+
+        insert_fixup(z);
+        return iterator(z);
+      }
+    } else {
+      /* incorrect hint */
+      return insert_unique(val).first;
+    }
+  }
 }
 
 template <class T, class C, class A>
