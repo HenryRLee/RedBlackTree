@@ -333,6 +333,12 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
 
 }
 
+/*
+ * insert function with a hint iterator
+ * If the hint is correct, the insertion can be done in constant time.
+ * Otherwise, call the basic insert function.
+ * According to C++11, the hint iterator follows the element being inserted.
+ */
 template <class T, class C, class A>
 typename rb_tree<T, C, A>::iterator
 rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
@@ -353,7 +359,9 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
       node_ptr prev = prev_node(pos);
 
       if (comp_(prev->key, val)) {
-        /* the right most node should have no right child */
+        /* prev < val, correct hint
+         * The rightmost node should not have a right child, so making the new
+         * node as the right child would be safe. */
         node_ptr z = create_node(val);
         ++size_;
 
@@ -387,7 +395,7 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
     node_ptr prev = prev_node(pos);
 
     if (comp_(prev->key, val) && comp_(val, pos->key)) {
-      // prev < val < pos
+      /* prev < val < pos, correct hint */
       if (prev->right == nil_) {
         /* prev has no right child */
         node_ptr z = create_node(val);
