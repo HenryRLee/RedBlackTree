@@ -49,18 +49,18 @@ class rb_tree {
   iterator find (const key_type& val);
 
   iterator begin() { return iterator(begin_); }
-  const_iterator begin() const { return iterator(begin_); }
+  const_iterator begin() const { return const_iterator(begin_); }
   iterator end() { return iterator(end_); }
-  const_iterator end() const { return iterator(end_); }
+  const_iterator end() const { return const_iterator(end_); }
   const_iterator cbegin() const { return const_iterator(begin_); }
   const_iterator cend() const { return const_iterator(end_); }
 
   reverse_iterator rbegin() { return reverse_iterator(end()); }
-  const_reverse_iterator rbegin() const { return reverse_iterator(end()); }
+  const_reverse_iterator rbegin() const {return const_reverse_iterator(end());}
   reverse_iterator rend() { return reverse_iterator(begin()); }
-  const_reverse_iterator rend() const { return reverse_iterator(begin()); }
-  const_reverse_iterator crbegin() const { return reverse_iterator(end_); }
-  const_reverse_iterator crend() const { return reverse_iterator(begin_); }
+  const_reverse_iterator rend() const {return const_reverse_iterator(begin());}
+  const_reverse_iterator crbegin() const {return const_reverse_iterator(end_);}
+  const_reverse_iterator crend() const {return const_reverse_iterator(begin_);}
 
   size_type size() const { return size_; }
   bool empty() const { return size_ == 0; }
