@@ -10,6 +10,9 @@ template <class T,
           class Compare = std::less<T>,
           class Alloc = std::allocator<T> >
 class rb_tree {
+ protected:
+  class iterator_type;
+  class const_iterator_type;
 
  public:
   typedef T key_type;
@@ -24,8 +27,8 @@ class rb_tree {
   typedef typename std::allocator_traits<allocator_type>::pointer pointer;
   typedef typename std::allocator_traits<allocator_type>::const_pointer
     const_pointer;
-  class iterator;
-  typedef iterator const_iterator;
+  typedef const_iterator_type iterator;
+  typedef const_iterator_type const_iterator;
   typedef std::reverse_iterator<iterator> reverse_iterator;
   typedef reverse_iterator const_reverse_iterator;
 
@@ -79,54 +82,72 @@ class rb_tree {
     begin_ = end_;
   }
 
-  class iterator : public std::iterator<std::bidirectional_iterator_tag,
+ protected:
+  template <class Pointer, class Reference>
+  class iterator_base : public std::iterator<std::bidirectional_iterator_tag,
                                         value_type,
                                         difference_type,
-                                        const_pointer,
-                                        const_reference> {
+                                        Pointer,
+                                        Reference> {
    public:
-    const value_type& operator*() const { return ptr_->key; }
-    const value_type* operator->() const { return &(operator*()); }
+    Reference operator*() const { return ptr_->key; }
+    Pointer operator->() const { return &(operator*()); }
 
-    iterator& operator++() {
+    iterator_base& operator++() {
       ptr_ = next_node(ptr_);
       return *this;
     }
 
-    iterator operator++(int) {
-      iterator tmp(ptr_);
+    iterator_base operator++(int) {
+      iterator_base tmp(ptr_);
       ++*this;
       return tmp;
     }
 
-    iterator& operator--() {
+    iterator_base& operator--() {
       ptr_ = prev_node(ptr_);
       return *this;
     }
 
-    iterator operator--(int) {
-      iterator tmp(ptr_);
+    iterator_base operator--(int) {
+      iterator_base tmp(ptr_);
       --*this;
       return tmp;
     }
 
-    inline bool operator==(const iterator& y) {
+    inline bool operator==(const iterator_base& y) {
       return this->ptr_ == y.ptr_;
     }
 
-    inline bool operator!=(const iterator& y) {
+    inline bool operator!=(const iterator_base& y) {
       return !(this->ptr_ == y.ptr_);
     }
 
-    iterator() { }
-    iterator(node_ptr x) { ptr_ = x; }
+    iterator_base() { }
 
-   private:
+   protected:
     node_ptr ptr_;
-    friend class rb_tree;
+    iterator_base(node_ptr rhs) { ptr_ = rhs; }
   }; // iterator
 
- protected:
+  class iterator_type : public iterator_base <value_type *, value_type &> {
+  public:
+    iterator_type() { }
+  protected:
+    iterator_type(node_ptr rhs) { this->ptr_ = rhs; }
+    friend class rb_tree;
+  };
+
+  class const_iterator_type : public iterator_base <const value_type *,
+                                                    const value_type &> {
+  public:
+    const_iterator_type() { }
+    const_iterator_type(const iterator_type &rhs) { this->ptr_ = rhs.ptr_; }
+  protected:
+    const_iterator_type(node_ptr rhs) { this->ptr_ = rhs; }
+    friend class rb_tree;
+  };
+
   struct rb_tree_node {
     value_type key;
     rb_tree_color color;
@@ -163,8 +184,8 @@ class rb_tree {
     node_alloc_traits::deallocate(alloc_, x, 1);
   }
 
-  std::pair <node_ptr, bool> insert_unique(const value_type& val);
-  node_ptr insert_unique(node_ptr pos, const value_type& val);
+  std::pair <iterator_type, bool> insert_unique(const value_type& val);
+  iterator_type insert_unique(node_ptr pos, const value_type& val);
 
   static node_ptr min_node(node_ptr x) {
     while (x->left != nil_)
@@ -250,7 +271,7 @@ rb_tree<T, C, A>::erase(const_iterator pos) {
 }
 
 template <class T, class C, class A>
-std::pair <typename rb_tree<T, C, A>::node_ptr, bool>
+std::pair <typename rb_tree<T, C, A>::iterator_type, bool>
 rb_tree<T, C, A>::insert_unique(const value_type& val) {
   node_ptr x = root();
   node_ptr y = end_;
@@ -278,7 +299,7 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
       z->parent = end_;
 
       insert_fixup(z);
-      return std::pair<node_ptr, bool>(z, true);
+      return std::pair<iterator_type, bool>(z, true);
     } else if (y == begin_) {
       /* begin */
       node_ptr z = create_node(val);
@@ -289,7 +310,7 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
       z->parent = y;
 
       insert_fixup(z);
-      return std::pair<node_ptr, bool>(z, true);
+      return std::pair<iterator_type, bool>(z, true);
     } else {
       /* decrement j */
       node_ptr tmp = j->parent;
@@ -307,10 +328,10 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
         z->parent = y;
 
         insert_fixup(z);
-        return std::pair<node_ptr, bool>(z, true);
+        return std::pair<iterator_type, bool>(z, true);
       } else {
         /* duplicate */
-        return std::pair<node_ptr, bool>(j, false);
+        return std::pair<iterator_type, bool>(j, false);
       }
     }
   } else {
@@ -324,10 +345,10 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
       z->parent = y;
 
       insert_fixup(z);
-      return std::pair<node_ptr, bool>(z, true);
+      return std::pair<iterator_type, bool>(z, true);
     } else {
       /* duplicate */
-      return std::pair<node_ptr, bool>(j, false);
+      return std::pair<iterator_type, bool>(j, false);
     }
   }
 
@@ -340,7 +361,7 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
  * According to C++11, the hint iterator follows the element being inserted.
  */
 template <class T, class C, class A>
-typename rb_tree<T, C, A>::node_ptr
+typename rb_tree<T, C, A>::iterator_type
 rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
   if (pos == end_) {
     if (pos == begin_) {
