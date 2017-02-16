@@ -36,15 +36,7 @@ class rb_tree {
   struct rb_tree_node;
   typedef rb_tree_node* node_ptr;
 
-  enum rb_tree_color { red_, black_ };
   static constexpr node_ptr nil_ = 0;
-
-  typedef std::allocator_traits<allocator_type> alloc_traits;
-  typedef typename alloc_traits::template rebind_traits<struct rb_tree_node>
-    node_alloc_traits;
-  typename node_alloc_traits::allocator_type alloc_;
-
-  key_compare comp_;
 
  public:
   std::pair <iterator, bool> insert(const value_type& val);
@@ -148,6 +140,8 @@ class rb_tree {
     friend class rb_tree;
   };
 
+  enum rb_tree_color { red_, black_ };
+
   struct rb_tree_node {
     value_type key;
     rb_tree_color color;
@@ -157,6 +151,13 @@ class rb_tree {
 
     rb_tree_node(const value_type& val) : key(val) { }
   }; // rb_tree_node
+
+  typedef std::allocator_traits<allocator_type> alloc_traits;
+  typedef typename alloc_traits::template rebind_traits<struct rb_tree_node>
+    node_alloc_traits;
+  typename node_alloc_traits::allocator_type alloc_;
+
+  key_compare comp_;
 
   /*
    * Both children of the end_ node point to the root node, and the parent
