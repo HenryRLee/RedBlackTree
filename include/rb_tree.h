@@ -163,8 +163,8 @@ class rb_tree {
     node_alloc_traits::deallocate(alloc_, x, 1);
   }
 
-  std::pair <iterator, bool> insert_unique(const value_type& val);
-  iterator insert_unique(node_ptr pos, const value_type& val);
+  std::pair <node_ptr, bool> insert_unique(const value_type& val);
+  node_ptr insert_unique(node_ptr pos, const value_type& val);
 
   static node_ptr min_node(node_ptr x) {
     while (x->left != nil_)
@@ -250,7 +250,7 @@ rb_tree<T, C, A>::erase(const_iterator pos) {
 }
 
 template <class T, class C, class A>
-std::pair <typename rb_tree<T, C, A>::iterator, bool>
+std::pair <typename rb_tree<T, C, A>::node_ptr, bool>
 rb_tree<T, C, A>::insert_unique(const value_type& val) {
   node_ptr x = root();
   node_ptr y = end_;
@@ -278,7 +278,7 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
       z->parent = end_;
 
       insert_fixup(z);
-      return std::pair<iterator, bool>(iterator(z), true);
+      return std::pair<node_ptr, bool>(z, true);
     } else if (y == begin_) {
       /* begin */
       node_ptr z = create_node(val);
@@ -289,7 +289,7 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
       z->parent = y;
 
       insert_fixup(z);
-      return std::pair<iterator, bool>(iterator(z), true);
+      return std::pair<node_ptr, bool>(z, true);
     } else {
       /* decrement j */
       node_ptr tmp = j->parent;
@@ -307,10 +307,10 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
         z->parent = y;
 
         insert_fixup(z);
-        return std::pair<iterator, bool>(iterator(z), true);
+        return std::pair<node_ptr, bool>(z, true);
       } else {
         /* duplicate */
-        return std::pair<iterator, bool>(iterator(j), false);
+        return std::pair<node_ptr, bool>(j, false);
       }
     }
   } else {
@@ -324,10 +324,10 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
       z->parent = y;
 
       insert_fixup(z);
-      return std::pair<iterator, bool>(iterator(z), true);
+      return std::pair<node_ptr, bool>(z, true);
     } else {
       /* duplicate */
-      return std::pair<iterator, bool>(iterator(j), false);
+      return std::pair<node_ptr, bool>(j, false);
     }
   }
 
@@ -340,7 +340,7 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
  * According to C++11, the hint iterator follows the element being inserted.
  */
 template <class T, class C, class A>
-typename rb_tree<T, C, A>::iterator
+typename rb_tree<T, C, A>::node_ptr
 rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
   if (pos == end_) {
     if (pos == begin_) {
