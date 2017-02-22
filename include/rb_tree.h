@@ -266,26 +266,6 @@ class rb_tree {
   iterator_type upper_bound_unique(const key_type& val);
 };
 
-/*
-template <class T, class C, class A>
-std::pair <typename rb_tree<T, C, A>::iterator, bool>
-rb_tree<T, C, A>::insert(const value_type& val) {
-  return insert_unique(val);
-}
-
-template <class T, class C, class A>
-typename rb_tree<T, C, A>::iterator
-rb_tree<T, C, A>::insert(const_iterator pos, const value_type& val) {
-  return insert_unique(pos.ptr_, val);
-}
-
-template <class T, class C, class A>
-typename rb_tree<T, C, A>::iterator
-rb_tree<T, C, A>::erase(const_iterator pos) {
-  return erase_iter(pos.ptr_);
-}
-*/
-
 template <class T, class C, class A>
 std::pair <typename rb_tree<T, C, A>::iterator_type, bool>
 rb_tree<T, C, A>::insert_unique(const value_type& val) {
