@@ -39,10 +39,16 @@ class rb_tree {
   static constexpr node_ptr nil_ = 0;
 
  public:
-  std::pair <iterator, bool> insert(const value_type& val);
-  iterator insert(const_iterator pos, const value_type& val);
+  std::pair <iterator, bool> insert(const value_type& val) {
+    return insert_unique(val);
+  }
+  iterator insert(const_iterator pos, const value_type& val) {
+    return insert_unique(pos.ptr_, val);
+  }
 
-  iterator erase(const_iterator pos);
+  iterator erase(const_iterator pos) {
+    return erase_iter(pos.ptr_);
+  }
   size_type erase(const key_type& val);
   iterator erase(const_iterator first, const_iterator last);
 
@@ -61,6 +67,19 @@ class rb_tree {
   const_reverse_iterator rend() const {return const_reverse_iterator(begin());}
   const_reverse_iterator crbegin() const {return const_reverse_iterator(end_);}
   const_reverse_iterator crend() const {return const_reverse_iterator(begin_);}
+
+  iterator lower_bound(const value_type& val) {
+    return lower_bound_unique(val);
+  }
+  const_iterator lower_bound(const value_type& val) const {
+    return lower_bound_unique(val);
+  }
+  iterator upper_bound(const value_type& val) {
+    return upper_bound_unique(val);
+  }
+  const_iterator upper_bound(const value_type& val) const {
+    return upper_bound_unique(val);
+  }
 
   size_type size() const { return size_; }
   bool empty() const { return size_ == 0; }
@@ -242,8 +261,12 @@ class rb_tree {
 
   void insert_fixup(node_ptr z);
   void erase_fixup(node_ptr x, node_ptr xparent);
+
+  iterator_type lower_bound_unique(const key_type& val);
+  iterator_type upper_bound_unique(const key_type& val);
 };
 
+/*
 template <class T, class C, class A>
 std::pair <typename rb_tree<T, C, A>::iterator, bool>
 rb_tree<T, C, A>::insert(const value_type& val) {
@@ -261,7 +284,7 @@ typename rb_tree<T, C, A>::iterator
 rb_tree<T, C, A>::erase(const_iterator pos) {
   return erase_iter(pos.ptr_);
 }
-
+*/
 
 template <class T, class C, class A>
 std::pair <typename rb_tree<T, C, A>::iterator_type, bool>
@@ -438,6 +461,9 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
   }
 }
 
+/*
+ * Return the iterator next to the erased one
+ */
 template <class T, class C, class A>
 typename rb_tree<T, C, A>::iterator_type
 rb_tree<T, C, A>::erase_iter(node_ptr pos) {
@@ -673,6 +699,41 @@ void rb_tree<T, C, A>::erase_node(node_ptr z) {
   destroy_node(z);
 }
 
+template <class T, class C, class A>
+typename rb_tree<T, C, A>::iterator_type
+rb_tree<T, C, A>::lower_bound_unique(const key_type& val) {
+  node_ptr y = end_;
+
+  for (node_ptr x = root(); x != nil_;) {
+    if (comp_(x->key, val)) {
+      // x < val
+      x = x->right;
+    } else {
+      // val <= x
+      y = x;
+      x = x->left;
+    }
+  }
+  return iterator_type(y);
+}
+
+template <class T, class C, class A>
+typename rb_tree<T, C, A>::iterator_type
+rb_tree<T, C, A>::upper_bound_unique(const key_type& val) {
+  node_ptr y = end_;
+
+  for (node_ptr x = root(); x != nil_;) {
+    if (comp_(val, x->key)) {
+      // val < x
+      y = x;
+      x = x->left;
+    } else {
+      // x <= val
+      x = x->right;
+    }
+  }
+  return iterator_type(y);
+}
 } // namespace rbtree
 
 #endif // RB_TREE_H
