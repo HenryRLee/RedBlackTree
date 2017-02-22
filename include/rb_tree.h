@@ -185,9 +185,6 @@ class rb_tree {
     node_alloc_traits::deallocate(alloc_, x, 1);
   }
 
-  std::pair <iterator_type, bool> insert_unique(const value_type& val);
-  iterator_type insert_unique(node_ptr pos, const value_type& val);
-
   static node_ptr min_node(node_ptr x) {
     while (x->left != nil_)
       x = x->left;
@@ -234,6 +231,10 @@ class rb_tree {
     return x;
   }
 
+  std::pair <iterator_type, bool> insert_unique(const value_type& val);
+  iterator_type insert_unique(node_ptr pos, const value_type& val);
+  iterator_type erase_iter(node_ptr pos);
+
   void left_rotate(node_ptr x);
   void right_rotate(node_ptr x);
   void transplant(node_ptr u, node_ptr v);
@@ -258,18 +259,9 @@ rb_tree<T, C, A>::insert(const_iterator pos, const value_type& val) {
 template <class T, class C, class A>
 typename rb_tree<T, C, A>::iterator
 rb_tree<T, C, A>::erase(const_iterator pos) {
-  if (pos == iterator(end_))
-    return end();
-
-  iterator next = pos;
-  ++next;
-
-  --size_;
-
-  erase_node(pos.ptr_);
-
-  return next;
+  return erase_iter(pos.ptr_);
 }
+
 
 template <class T, class C, class A>
 std::pair <typename rb_tree<T, C, A>::iterator_type, bool>
@@ -376,7 +368,7 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
       z->parent = end_;
 
       insert_fixup(z);
-      return iterator(z);
+      return iterator_type(z);
     } else {
       node_ptr prev = prev_node(pos);
 
@@ -391,7 +383,7 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
         z->parent = prev;
 
         insert_fixup(z);
-        return iterator(z);
+        return iterator_type(z);
       } else {
         /* incorrect hint */
         return insert_unique(val).first;
@@ -408,7 +400,7 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
       begin_ = z;
 
       insert_fixup(z);
-      return iterator(z);
+      return iterator_type(z);
     } else {
       /* incorrect hint */
       return insert_unique(val).first;
@@ -427,7 +419,7 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
         z->parent = prev;
 
         insert_fixup(z);
-        return iterator(z);
+        return iterator_type(z);
       } else {
         /* prev has a right child, then the left child of pos is nil */
         node_ptr z = create_node(val);
@@ -437,13 +429,29 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
         z->parent = pos;
 
         insert_fixup(z);
-        return iterator(z);
+        return iterator_type(z);
       }
     } else {
       /* incorrect hint */
       return insert_unique(val).first;
     }
   }
+}
+
+template <class T, class C, class A>
+typename rb_tree<T, C, A>::iterator_type
+rb_tree<T, C, A>::erase_iter(node_ptr pos) {
+  if (pos == end_)
+    return iterator_type(end_);
+
+  iterator_type next(pos);
+  ++next;
+
+  --size_;
+
+  erase_node(pos);
+
+  return next;
 }
 
 template <class T, class C, class A>
