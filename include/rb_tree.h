@@ -10,10 +10,6 @@ template <class T,
           class Compare = std::less<T>,
           class Alloc = std::allocator<T> >
 class rb_tree {
- protected:
-  class iterator_type;
-  class const_iterator_type;
-
  public:
   typedef T key_type;
   typedef T value_type;
@@ -27,6 +23,15 @@ class rb_tree {
   typedef typename std::allocator_traits<allocator_type>::pointer pointer;
   typedef typename std::allocator_traits<allocator_type>::const_pointer
     const_pointer;
+
+ protected:
+  template <class Pointer, class Reference> class iterator_base;
+  /* iterator_type is convertible to any other iterators */
+  typedef iterator_base<value_type *, value_type &> iterator_type;
+  typedef iterator_base<const value_type *, const value_type &>
+    const_iterator_type;
+
+ public:
   typedef const_iterator_type iterator;
   typedef const_iterator_type const_iterator;
   typedef std::reverse_iterator<iterator> reverse_iterator;
@@ -149,28 +154,17 @@ class rb_tree {
 
     iterator_base() { }
 
+    /*
+     * Both const_iterator and iterator can be converted from the iterator type
+     */
+    iterator_base(const iterator_base<value_type *, value_type &>& rhs)
+      : ptr_(rhs.ptr_) { }
+
    protected:
     node_ptr ptr_;
-    iterator_base(node_ptr rhs) { ptr_ = rhs; }
-  }; // iterator
-
-  class iterator_type : public iterator_base <value_type *, value_type &> {
-  public:
-    iterator_type() { }
-  protected:
-    iterator_type(node_ptr rhs) { this->ptr_ = rhs; }
+    iterator_base(node_ptr rhs) : ptr_(rhs) { }
     friend class rb_tree;
-  };
-
-  class const_iterator_type : public iterator_base <const value_type *,
-                                                    const value_type &> {
-  public:
-    const_iterator_type() { }
-    const_iterator_type(const iterator_type &rhs) { this->ptr_ = rhs.ptr_; }
-  protected:
-    const_iterator_type(node_ptr rhs) { this->ptr_ = rhs; }
-    friend class rb_tree;
-  };
+  }; // iterator_base
 
   enum rb_tree_color { red_, black_ };
 
