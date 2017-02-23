@@ -52,8 +52,6 @@ class rb_tree {
   size_type erase(const key_type& val);
   iterator erase(const_iterator first, const_iterator last);
 
-  iterator find (const key_type& val);
-
   iterator begin() { return iterator(begin_); }
   const_iterator begin() const { return const_iterator(begin_); }
   iterator end() { return iterator(end_); }
@@ -79,6 +77,14 @@ class rb_tree {
   }
   const_iterator upper_bound(const value_type& val) const {
     return upper_bound_unique(val);
+  }
+
+  iterator find(const key_type& val) {
+    return find_unique(val);
+  }
+
+  const_iterator find(const value_type& val) const {
+    return find_unique(val);
   }
 
   size_type size() const { return size_; }
@@ -264,6 +270,7 @@ class rb_tree {
 
   iterator_type lower_bound_unique(const key_type& val);
   iterator_type upper_bound_unique(const key_type& val);
+  iterator_type find_unique(const key_type& val);
 };
 
 template <class T, class C, class A>
@@ -714,6 +721,18 @@ rb_tree<T, C, A>::upper_bound_unique(const key_type& val) {
   }
   return iterator_type(y);
 }
+
+template <class T, class C, class A>
+typename rb_tree<T, C, A>::iterator_type
+rb_tree<T, C, A>::find_unique(const key_type& val) {
+  iterator_type j = lower_bound_unique(val);
+
+  if (j.ptr_ == end_ || comp_(val, *j))
+    return iterator_type(end_);
+  else
+    return j;
+}
+
 } // namespace rbtree
 
 #endif // RB_TREE_H
