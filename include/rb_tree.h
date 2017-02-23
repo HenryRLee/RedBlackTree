@@ -79,12 +79,19 @@ class rb_tree {
     return upper_bound_unique(val);
   }
 
-  iterator find(const key_type& val) {
+  iterator find(const value_type& val) {
+    return find_unique(val);
+  }
+  const_iterator find(const value_type& val) const {
     return find_unique(val);
   }
 
-  const_iterator find(const value_type& val) const {
-    return find_unique(val);
+  std::pair<iterator, iterator> equal_range(const value_type& val) {
+    return equal_range_unique(val);
+  }
+  std::pair<const_iterator,const_iterator>
+  equal_range(const value_type& val) const {
+    return equal_range_unique(val);
   }
 
   size_type size() const { return size_; }
@@ -271,6 +278,10 @@ class rb_tree {
   iterator_type lower_bound_unique(const key_type& val);
   iterator_type upper_bound_unique(const key_type& val);
   iterator_type find_unique(const key_type& val);
+
+  std::pair<iterator_type, iterator_type>
+  equal_range_unique(const key_type& val);
+
 };
 
 template <class T, class C, class A>
@@ -686,6 +697,9 @@ void rb_tree<T, C, A>::erase_node(node_ptr z) {
   destroy_node(z);
 }
 
+/*
+ * Return the iterator of the first element no less than val
+ */
 template <class T, class C, class A>
 typename rb_tree<T, C, A>::iterator_type
 rb_tree<T, C, A>::lower_bound_unique(const key_type& val) {
@@ -704,6 +718,9 @@ rb_tree<T, C, A>::lower_bound_unique(const key_type& val) {
   return iterator_type(y);
 }
 
+/*
+ * Return the iterator of the first element strictly greater than val
+ */
 template <class T, class C, class A>
 typename rb_tree<T, C, A>::iterator_type
 rb_tree<T, C, A>::upper_bound_unique(const key_type& val) {
@@ -722,6 +739,10 @@ rb_tree<T, C, A>::upper_bound_unique(const key_type& val) {
   return iterator_type(y);
 }
 
+/*
+ * If the element is found, return the iterator to the element.
+ * Otherwise return end()
+ */
 template <class T, class C, class A>
 typename rb_tree<T, C, A>::iterator_type
 rb_tree<T, C, A>::find_unique(const key_type& val) {
@@ -733,6 +754,22 @@ rb_tree<T, C, A>::find_unique(const key_type& val) {
     return j;
 }
 
+/*
+ * Return the pair (lower_bound, upper_bound)
+ * However we can skip calculating the upper_bound since the elements in the
+ * tree are all unique.
+ */
+template <class T, class C, class A>
+std::pair<typename rb_tree<T, C, A>::iterator_type,
+          typename rb_tree<T, C, A>::iterator_type>
+rb_tree<T, C, A>::equal_range_unique(const key_type& val) {
+  iterator_type j = lower_bound_unique(val);
+
+  if (j.ptr_ == end_ || comp_(val, *j))
+    return std::pair<iterator_type,iterator_type>(j, j);
+  else
+    return std::pair<iterator_type,iterator_type>(j, std::next(j));
+}
 } // namespace rbtree
 
 #endif // RB_TREE_H
