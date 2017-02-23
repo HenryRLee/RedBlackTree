@@ -54,7 +54,9 @@ class rb_tree {
   iterator erase(const_iterator pos) {
     return erase_iter(pos.ptr_);
   }
-  size_type erase(const key_type& val);
+  size_type erase(const key_type& val) {
+    return erase_unique(val);
+  }
   iterator erase(const_iterator first, const_iterator last);
 
   iterator begin() { return iterator(begin_); }
@@ -260,6 +262,7 @@ class rb_tree {
   std::pair <iterator_type, bool> insert_unique(const value_type& val);
   iterator_type insert_unique(node_ptr pos, const value_type& val);
   iterator_type erase_iter(node_ptr pos);
+  size_type erase_unique(const value_type& val);
 
   void left_rotate(node_ptr x);
   void right_rotate(node_ptr x);
@@ -454,7 +457,7 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
 }
 
 /*
- * Return the iterator next to the erased one
+ * Return the iterator that follows the erased one
  */
 template <class T, class C, class A>
 typename rb_tree<T, C, A>::iterator_type
@@ -465,11 +468,26 @@ rb_tree<T, C, A>::erase_iter(node_ptr pos) {
   iterator_type next(pos);
   ++next;
 
-  --size_;
-
   erase_node(pos);
 
   return next;
+}
+
+/*
+ * Return the number of elements erased
+ * Since the elements are all unique, the return value is either 0 or 1
+ */
+template <class T, class C, class A>
+typename rb_tree<T, C, A>::size_type
+rb_tree<T, C, A>::erase_unique(const value_type& val) {
+  iterator_type j = lower_bound_unique(val);
+
+  if (j.ptr_ == end_ || comp_(val, *j)) {
+    return 0;
+  } else {
+    erase_node(j.ptr_);
+    return 1;
+  }
 }
 
 template <class T, class C, class A>
@@ -656,6 +674,8 @@ void rb_tree<T, C, A>::erase_node(node_ptr z) {
   node_ptr xparent;
   node_ptr y = z;
   int ycolor = y->color;
+
+  --size_;
 
   if (z->left == nil_) {
     x = z->right;
