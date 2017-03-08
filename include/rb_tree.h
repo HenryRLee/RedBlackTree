@@ -121,7 +121,7 @@ class rb_tree {
                                         Pointer,
                                         Reference> {
    public:
-    Reference operator*() const { return ptr_->key; }
+    Reference operator*() const { return ptr_->value; }
     Pointer operator->() const { return &(operator*()); }
 
     iterator_base& operator++() {
@@ -171,13 +171,13 @@ class rb_tree {
   enum rb_tree_color { red_, black_ };
 
   struct rb_tree_node {
-    value_type key;
+    value_type value;
     rb_tree_color color;
     node_ptr parent;
     node_ptr left;
     node_ptr right;
 
-    rb_tree_node(const value_type& val) : key(val) { }
+    rb_tree_node(const value_type& val) : value(val) { }
   }; // rb_tree_node
 
   typedef std::allocator_traits<allocator_type> alloc_traits;
@@ -206,7 +206,7 @@ class rb_tree {
   /* Allocate space for a node and construct the value */
   node_ptr create_node(const value_type& val) {
     node_ptr z = create_node();
-    alloc_traits::construct(alloc_, &z->key, val);
+    alloc_traits::construct(alloc_, &z->value, val);
     z->left = nil_;
     z->right = nil_;
     return z;
@@ -215,7 +215,7 @@ class rb_tree {
   /* Recycle the node. If the node has a constructed value, destruct it. */
   void destroy_node(node_ptr x, bool has_value = true) {
     if (has_value)
-      alloc_traits::destroy(alloc_, &x->key);
+      alloc_traits::destroy(alloc_, &x->value);
     node_alloc_traits::deallocate(node_alloc_, x, 1);
   }
 
@@ -297,7 +297,7 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
 
   while (x != nil_) {
     y = x;
-    comp = comp_(val, x->key);
+    comp = comp_(val, x->value);
     x = comp ? x->left : x->right;
   }
 
@@ -337,7 +337,7 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
       }
       j = tmp;
 
-      if (comp_(j->key, val)) {
+      if (comp_(j->value, val)) {
         node_ptr z = create_node(val);
         ++size_;
 
@@ -354,7 +354,7 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
   } else {
     /* right */
 
-    if (comp_(j->key, val)) {
+    if (comp_(j->value, val)) {
       node_ptr z = create_node(val);
       ++size_;
 
@@ -396,7 +396,7 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
     } else {
       node_ptr prev = prev_node(pos);
 
-      if (comp_(prev->key, val)) {
+      if (comp_(prev->value, val)) {
         /* prev < val, correct hint
          * The rightmost node should not have a right child, so making the new
          * node as the right child would be safe. */
@@ -414,7 +414,7 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
       }
     }
   } else if (pos == begin_) {
-    if (comp_(val, pos->key)) {
+    if (comp_(val, pos->value)) {
       /* begin */
       node_ptr z = create_node(val);
       ++size_;
@@ -432,7 +432,7 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
   } else {
     node_ptr prev = prev_node(pos);
 
-    if (comp_(prev->key, val) && comp_(val, pos->key)) {
+    if (comp_(prev->value, val) && comp_(val, pos->value)) {
       /* prev < val < pos, correct hint */
       if (prev->right == nil_) {
         /* prev has no right child */
@@ -726,7 +726,7 @@ rb_tree<T, C, A>::lower_bound_unique(const key_type& val) {
   node_ptr y = end_;
 
   for (node_ptr x = root(); x != nil_;) {
-    if (comp_(x->key, val)) {
+    if (comp_(x->value, val)) {
       // x < val
       x = x->right;
     } else {
@@ -747,7 +747,7 @@ rb_tree<T, C, A>::upper_bound_unique(const key_type& val) {
   node_ptr y = end_;
 
   for (node_ptr x = root(); x != nil_;) {
-    if (comp_(val, x->key)) {
+    if (comp_(val, x->value)) {
       // val < x
       y = x;
       x = x->left;
