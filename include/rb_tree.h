@@ -105,7 +105,7 @@ class rb_tree {
   bool empty() const { return size_ == 0; }
 
   rb_tree() : size_(0) {
-    end_ = node_alloc_traits::allocate(alloc_, 1);
+    end_ = create_node();
     end_->parent = end_;
     end_->left = nil_;
     end_->right = nil_;
@@ -183,7 +183,8 @@ class rb_tree {
   typedef std::allocator_traits<allocator_type> alloc_traits;
   typedef typename alloc_traits::template rebind_traits<struct rb_tree_node>
     node_alloc_traits;
-  typename node_alloc_traits::allocator_type alloc_;
+  typename alloc_traits::allocator_type alloc_;
+  typename node_alloc_traits::allocator_type node_alloc_;
 
   key_compare comp_;
 
@@ -199,18 +200,23 @@ class rb_tree {
 
   size_type size_;
 
-  node_ptr create_node() { return node_alloc_traits::allocate(alloc_, 1); }
+  /* Allocate space for an empty node */
+  node_ptr create_node() { return node_alloc_traits::allocate(node_alloc_, 1); }
 
+  /* Allocate space for a node and construct the value */
   node_ptr create_node(const value_type& val) {
-    node_ptr z = node_alloc_traits::allocate(alloc_, 1);
-    z->key = val;
+    node_ptr z = create_node();
+    alloc_traits::construct(alloc_, &z->key, val);
     z->left = nil_;
     z->right = nil_;
     return z;
   }
 
-  void destroy_node(node_ptr x) {
-    node_alloc_traits::deallocate(alloc_, x, 1);
+  /* Recycle the node. If the node has a constructed value, destruct it. */
+  void destroy_node(node_ptr x, bool has_value = true) {
+    if (has_value)
+      alloc_traits::destroy(alloc_, &x->key);
+    node_alloc_traits::deallocate(node_alloc_, x, 1);
   }
 
   static node_ptr min_node(node_ptr x) {
