@@ -50,6 +50,17 @@ class rb_tree {
   iterator insert(const_iterator pos, const value_type& val) {
     return insert_unique(pos.ptr_, val);
   }
+  template <class InputIterator>
+  void insert(InputIterator first, InputIterator last) {
+    for (InputIterator it = first; it != last; ++it) {
+      insert_unique(*it);
+    }
+  }
+  void insert(std::initializer_list<value_type> il) {
+    for (const value_type *it = il.begin(); it != il.end(); ++it) {
+      insert_unique(*it);
+    }
+  }
 
   iterator erase(const_iterator pos) {
     return erase_iter(pos.ptr_);
