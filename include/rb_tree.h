@@ -68,7 +68,9 @@ class rb_tree {
   size_type erase(const key_type& val) {
     return erase_unique(val);
   }
-  iterator erase(const_iterator first, const_iterator last);
+  iterator erase(const_iterator first, const_iterator last) {
+    return erase_range(first.ptr_, last.ptr_);
+  }
 
   iterator begin() { return iterator(begin_); }
   const_iterator begin() const { return const_iterator(begin_); }
@@ -279,6 +281,7 @@ class rb_tree {
   std::pair <iterator_type, bool> insert_unique(const value_type& val);
   iterator_type insert_unique(node_ptr pos, const value_type& val);
   iterator_type erase_iter(node_ptr pos);
+  iterator_type erase_range(node_ptr first, node_ptr last);
   size_type erase_unique(const value_type& val);
 
   void left_rotate(node_ptr x);
@@ -488,6 +491,24 @@ rb_tree<T, C, A>::erase_iter(node_ptr pos) {
   erase_node(pos);
 
   return next;
+}
+
+/*
+ * Erase the range [first, last)
+ * Return the iterator that follows the last erased one
+ */
+template <class T, class C, class A>
+typename rb_tree<T, C, A>::iterator_type
+rb_tree<T, C, A>::erase_range(node_ptr first, node_ptr last) {
+  if (first == end_)
+    return iterator_type(end_);
+
+  for (node_ptr now = first, next; now != last; now = next) {
+    next = next_node(now);
+    erase_node(now);
+  }
+
+  return last;
 }
 
 /*
