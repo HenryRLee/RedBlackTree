@@ -203,6 +203,7 @@ class rb_tree {
     node_ptr left;
     node_ptr right;
 
+    rb_tree_node() { }
     rb_tree_node(const value_type& val) : value(val) { }
   }; // rb_tree_node
 
@@ -221,6 +222,7 @@ class rb_tree {
    * Consequently, incrementing the rightmost node and decrementing the leftmost
    * node ends up with the end_ node.
    */
+  rb_tree_node end_node_;
   node_ptr begin_;
   node_ptr end_;
   node_ptr root() { return end_->left; }
@@ -231,7 +233,7 @@ class rb_tree {
    * Basically it's allocating a end_ node
    */
   void init() {
-    end_ = create_node();
+    end_ = &end_node_;
     end_->parent = end_;
     end_->left = nil_;
     end_->right = nil_;
