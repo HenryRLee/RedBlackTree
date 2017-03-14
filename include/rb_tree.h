@@ -16,13 +16,12 @@ class rb_tree {
   typedef Compare key_compare;
   typedef Compare value_compare;
   typedef Alloc allocator_type;
-  typedef value_type& reference;
-  typedef const value_type& const_reference;
-  typedef ptrdiff_t difference_type;
-  typedef size_t size_type;
-  typedef typename std::allocator_traits<allocator_type>::pointer pointer;
-  typedef typename std::allocator_traits<allocator_type>::const_pointer
-    const_pointer;
+  typedef typename allocator_type::reference reference;
+  typedef typename allocator_type::const_reference const_reference;
+  typedef typename allocator_type::difference_type difference_type;
+  typedef typename allocator_type::size_type size_type;
+  typedef typename allocator_type::pointer pointer;
+  typedef typename allocator_type::const_pointer const_pointer;
 
  protected:
   template <class Pointer, class Reference> class iterator_base;
@@ -44,6 +43,11 @@ class rb_tree {
   static constexpr node_ptr nil_ = 0;
 
  public:
+  rb_tree() : size_(0) {
+    init();
+    begin_ = end_;
+  }
+
   std::pair <iterator, bool> insert(const value_type& val) {
     return insert_unique(val);
   }
@@ -117,15 +121,6 @@ class rb_tree {
   size_type size() const { return size_; }
   bool empty() const { return size_ == 0; }
 
-  rb_tree() : size_(0) {
-    end_ = create_node();
-    end_->parent = end_;
-    end_->left = nil_;
-    end_->right = nil_;
-    end_->color = black_;
-    begin_ = end_;
-  }
-
  protected:
   template <class Pointer, class Reference>
   class iterator_base : public std::iterator<std::bidirectional_iterator_tag,
@@ -196,10 +191,11 @@ class rb_tree {
   typedef std::allocator_traits<allocator_type> alloc_traits;
   typedef typename alloc_traits::template rebind_traits<struct rb_tree_node>
     node_alloc_traits;
-  typename alloc_traits::allocator_type alloc_;
-  typename node_alloc_traits::allocator_type node_alloc_;
+  typedef typename node_alloc_traits::allocator_type node_allocator_type;
+  allocator_type alloc_;
+  node_allocator_type node_alloc_;
 
-  key_compare comp_;
+  value_compare comp_;
 
   /*
    * Both children of the end_ node point to the root node, and the parent
@@ -212,6 +208,17 @@ class rb_tree {
   node_ptr root() { return end_->left; }
 
   size_type size_;
+
+  /*
+   * Basically it's allocating a end_ node
+   */
+  void init() {
+    end_ = create_node();
+    end_->parent = end_;
+    end_->left = nil_;
+    end_->right = nil_;
+    end_->color = black_;
+  }
 
   /* Allocate space for an empty node */
   node_ptr create_node() { return node_alloc_traits::allocate(node_alloc_, 1); }
