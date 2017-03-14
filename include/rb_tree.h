@@ -48,6 +48,24 @@ class rb_tree {
     begin_ = end_;
   }
 
+  explicit rb_tree(const key_compare& comp,
+                   const allocator_type& alloc = allocator_type())
+    : size_(0),
+      comp_(value_compare(comp)),
+      alloc_(alloc),
+      node_alloc_(node_allocator_type(alloc)) {
+    init();
+    begin_ = end_;
+  }
+
+  explicit rb_tree(const allocator_type& alloc)
+    : size_(0),
+      alloc_(alloc),
+      node_alloc_(node_allocator_type(alloc)) {
+    init();
+    begin_ = end_;
+  }
+
   std::pair <iterator, bool> insert(const value_type& val) {
     return insert_unique(val);
   }
