@@ -43,10 +43,11 @@ class rb_tree {
   static constexpr node_ptr nil_ = 0;
 
  public:
-  rb_tree() : size_(0) {
-    init();
-    begin_ = end_;
-  }
+  /*
+   * constructors
+   */
+  rb_tree()
+    : rb_tree(key_compare(), allocator_type()) { }
 
   explicit rb_tree(const key_compare& comp,
                    const allocator_type& alloc = allocator_type())
@@ -54,28 +55,22 @@ class rb_tree {
       comp_(value_compare(comp)),
       alloc_(alloc),
       node_alloc_(node_allocator_type(alloc)) {
-    init();
+    end_ = &end_node_;
+    end_->parent = end_;
+    end_->left = nil_;
+    end_->right = nil_;
+    end_->color = black_;
     begin_ = end_;
   }
 
   explicit rb_tree(const allocator_type& alloc)
-    : size_(0),
-      alloc_(alloc),
-      node_alloc_(node_allocator_type(alloc)) {
-    init();
-    begin_ = end_;
-  }
+    : rb_tree(key_compare(), alloc) { }
 
   template <class InputIterator>
   rb_tree(InputIterator first, InputIterator last,
           const key_compare& comp = key_compare(),
           const allocator_type& alloc = allocator_type())
-    : size_(0),
-      comp_(value_compare(comp)),
-      alloc_(alloc),
-      node_alloc_(node_allocator_type(alloc)) {
-    init();
-    begin_ = end_;
+    : rb_tree(comp, alloc) {
     insert(first, last);
   }
 
@@ -241,17 +236,6 @@ class rb_tree {
   node_ptr root() { return end_->left; }
 
   size_type size_;
-
-  /*
-   * Basically it's allocating a end_ node
-   */
-  void init() {
-    end_ = &end_node_;
-    end_->parent = end_;
-    end_->left = nil_;
-    end_->right = nil_;
-    end_->color = black_;
-  }
 
   /* Allocate space for an empty node */
   node_ptr create_node() { return node_alloc_traits::allocate(node_alloc_, 1); }
