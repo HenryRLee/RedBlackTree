@@ -66,6 +66,19 @@ class rb_tree {
     begin_ = end_;
   }
 
+  template <class InputIterator>
+  rb_tree(InputIterator first, InputIterator last,
+          const key_compare& comp = key_compare(),
+          const allocator_type& alloc = allocator_type())
+    : size_(0),
+      comp_(value_compare(comp)),
+      alloc_(alloc),
+      node_alloc_(node_allocator_type(alloc)) {
+    init();
+    begin_ = end_;
+    insert(first, last);
+  }
+
   std::pair <iterator, bool> insert(const value_type& val) {
     return insert_unique(val);
   }
