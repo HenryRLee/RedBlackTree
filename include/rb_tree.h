@@ -84,11 +84,9 @@ class rb_tree {
 
     /* root */
     if (other.root() != nil_) {
-      end_->left = create_node(other.root()->value);
+      set_root(create_node(other.root()->value));
       root()->color = other.root()->color;
-      root()->parent = end_;
       copy_tree(other.root(), root());
-      end_->right = root();
     }
 
     begin_ = min_node(root());
@@ -255,6 +253,11 @@ class rb_tree {
   node_ptr begin_;
   node_ptr end_;
   node_ptr root() const { return end_->left; }
+  void set_root(node_ptr ptr) {
+    end_->left = ptr;
+    end_->right = ptr;
+    ptr->parent = end_;
+  }
 
   size_type size_;
 
@@ -394,9 +397,7 @@ rb_tree<T, C, A>::insert_unique(const value_type& val) {
       ++size_;
 
       begin_ = z;
-      end_->left = z;
-      end_->right = z;
-      z->parent = end_;
+      set_root(z);
 
       insert_fixup(z);
       return std::pair<iterator_type, bool>(z, true);
@@ -470,9 +471,7 @@ rb_tree<T, C, A>::insert_unique(node_ptr pos, const value_type& val) {
       ++size_;
 
       begin_ = z;
-      end_->left = z;
-      end_->right = z;
-      z->parent = end_;
+      set_root(z);
 
       insert_fixup(z);
       return iterator_type(z);
@@ -609,8 +608,7 @@ void rb_tree<T, C, A>::left_rotate(node_ptr x) {
 
   if (x->parent == end_) {
     /* root */
-    end_->left = y;
-    end_->right = y;
+    set_root(y);
   } else if (x == x->parent->left) {
     x->parent->left = y;
   } else {
@@ -633,8 +631,7 @@ void rb_tree<T, C, A>::right_rotate(node_ptr x) {
 
   if (x->parent == end_) {
     /* root */
-    end_->left = y;
-    end_->right = y;
+    set_root(y);
   } else if (x == x->parent->right) {
     x->parent->right = y;
   } else {
@@ -649,8 +646,7 @@ template <class T, class C, class A>
 void rb_tree<T, C, A>::transplant(node_ptr u, node_ptr v) {
   if (u->parent == end_) {
     /* root */
-    end_->left = v;
-    end_->right = v;
+    set_root(v);
   } else if (u == u->parent->left) {
     u->parent->left = v;
   } else {
