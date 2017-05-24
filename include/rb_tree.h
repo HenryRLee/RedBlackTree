@@ -70,9 +70,30 @@ class rb_tree {
   rb_tree(InputIterator first, InputIterator last,
           const key_compare& comp = key_compare(),
           const allocator_type& alloc = allocator_type())
-    : rb_tree(comp, alloc) {
-    insert(first, last);
+    : rb_tree(comp, alloc) { insert(first, last); }
+
+  rb_tree(const rb_tree& other)
+    : size_(0),
+      comp_(other.comp_),
+      alloc_(other.alloc_),
+      node_alloc_(node_allocator_type(other.alloc_)) {
+
+    end_ = &end_node_;
+    end_->parent = end_;
+    end_->color = black_;
+
+    /* root */
+    if (other.root() != nil_) {
+      end_->left = create_node(other.root()->value);
+      root()->color = other.root()->color;
+      root()->parent = end_;
+      copy_tree(other.root(), root());
+      end_->right = root();
+    }
+
+    begin_ = min_node(root());
   }
+  // end of constructors
 
   std::pair <iterator, bool> insert(const value_type& val) {
     return insert_unique(val);
@@ -233,7 +254,7 @@ class rb_tree {
   rb_tree_node end_node_;
   node_ptr begin_;
   node_ptr end_;
-  node_ptr root() { return end_->left; }
+  node_ptr root() const { return end_->left; }
 
   size_type size_;
 
@@ -300,6 +321,30 @@ class rb_tree {
       x = tmp;
     }
     return x;
+  }
+
+  void copy_tree(node_ptr src, node_ptr dst) {
+    /*
+     * src != nil_
+     * dst has been constructed
+     */
+    if (src->left != nil_) {
+      dst->left = create_node(src->left->value);
+      dst->left->color = src->left->color;
+      dst->left->parent = dst;
+      copy_tree(src->left, dst->left);
+    } else {
+      dst->left = nil_;
+    }
+
+    if (src->right != nil_) {
+      dst->right = create_node(src->right->value);
+      dst->right->color = src->right->color;
+      dst->right->parent = dst;
+      copy_tree(src->right, dst->right);
+    } else {
+      dst->right = nil_;
+    }
   }
 
   std::pair <iterator_type, bool> insert_unique(const value_type& val);
