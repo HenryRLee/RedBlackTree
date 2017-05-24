@@ -95,6 +95,11 @@ class rb_tree {
   }
   // end of constructors
 
+  /* destructor */
+  ~rb_tree() {
+    erase(begin(), end());
+  }
+
   std::pair <iterator, bool> insert(const value_type& val) {
     return insert_unique(val);
   }
@@ -609,7 +614,6 @@ void rb_tree<T, C, A>::left_rotate(node_ptr x) {
   y->parent = x->parent;
 
   if (x->parent == end_) {
-    /* root */
     set_root(y);
   } else if (x == x->parent->left) {
     x->parent->left = y;
@@ -632,7 +636,6 @@ void rb_tree<T, C, A>::right_rotate(node_ptr x) {
   y->parent = x->parent;
 
   if (x->parent == end_) {
-    /* root */
     set_root(y);
   } else if (x == x->parent->right) {
     x->parent->right = y;
@@ -647,8 +650,9 @@ void rb_tree<T, C, A>::right_rotate(node_ptr x) {
 template <class T, class C, class A>
 void rb_tree<T, C, A>::transplant(node_ptr u, node_ptr v) {
   if (u->parent == end_) {
-    /* root */
-    set_root(v);
+    /* set root */
+    end_->left = v;
+    end_->right = v;
   } else if (u == u->parent->left) {
     u->parent->left = v;
   } else {
