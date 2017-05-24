@@ -72,11 +72,13 @@ class rb_tree {
           const allocator_type& alloc = allocator_type())
     : rb_tree(comp, alloc) { insert(first, last); }
 
-  rb_tree(const rb_tree& other)
+  rb_tree(const rb_tree& other) : rb_tree(other, other.alloc_) { }
+
+  rb_tree(const rb_tree& other, const allocator_type& alloc)
     : size_(0),
       comp_(other.comp_),
-      alloc_(other.alloc_),
-      node_alloc_(node_allocator_type(other.alloc_)) {
+      alloc_(alloc),
+      node_alloc_(node_allocator_type(alloc)) {
 
     end_ = &end_node_;
     end_->parent = end_;
