@@ -115,12 +115,28 @@ class rb_tree {
     }
   }
 
-  // end of constructors
-
   /* destructor */
   ~rb_tree() noexcept { clear(); }
 
-  void clear() noexcept { erase(begin(), end()); }
+  /* assignments */
+  rb_tree& operator=(const rb_tree& other) {
+    if (this != &other) {
+      clear();
+      copy_tree(other);
+    }
+    return *this;
+  }
+
+  rb_tree& operator=(rb_tree&& other) {
+    if (this != &other) {
+      clear();
+      move_tree(other);
+    }
+    return *this;
+  }
+
+  // end of constructors/destructor/assignments
+
 
   std::pair <iterator, bool> insert(const value_type& val) {
     return insert_unique(val);
@@ -194,6 +210,7 @@ class rb_tree {
 
   size_type size() const { return size_; }
   bool empty() const { return size_ == 0; }
+  void clear() noexcept { erase(begin(), end()); }
 
  protected:
   template <class Pointer, class Reference>
