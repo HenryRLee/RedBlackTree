@@ -156,9 +156,9 @@ class rb_tree {
   // end of constructors
 
   /* destructor */
-  ~rb_tree() {
-    erase(begin(), end());
-  }
+  ~rb_tree() { clear(); }
+
+  void clear() noexcept { erase(begin(), end()); }
 
   std::pair <iterator, bool> insert(const value_type& val) {
     return insert_unique(val);
