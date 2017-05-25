@@ -79,55 +79,34 @@ class rb_tree {
   rb_tree(const rb_tree& other) : rb_tree(other, other.alloc_) { }
 
   rb_tree(const rb_tree& other, const allocator_type& alloc)
-    : alloc_(alloc),
+    : comp_(other.comp_),
+      alloc_(alloc),
       node_alloc_(node_allocator_type(alloc)) {
     copy_tree(other);
   }
 
   // move
-  rb_tree(rb_tree&& other)
-    : size_(other.size_),
-      comp_(other.comp_),
+  rb_tree(rb_tree&& other) noexcept
+    : comp_(other.comp_),
       alloc_(other.alloc_),
-      node_alloc_(node_allocator_type(other.alloc_)),
-      begin_(other.begin_) {
-
+      node_alloc_(node_allocator_type(other.alloc_)) {
     end_ = &end_node_;
     end_->parent = end_;
     end_->color = black_;
-    end_->left = other.root();
-    end_->right = other.root();
-    if (root() != nil_)
-      root()->parent = end_;
 
-    other.end_->left = nil_;
-    other.end_->right = nil_;
-    other.begin_ = other.end_;
-    other.size_ = 0;
+    move_tree(other);
   }
 
-  rb_tree(rb_tree&& other, const allocator_type& alloc)
+  rb_tree(rb_tree&& other, const allocator_type& alloc) noexcept
     : comp_(other.comp_),
       alloc_(alloc),
       node_alloc_(node_allocator_type(alloc)) {
-
     end_ = &end_node_;
     end_->parent = end_;
     end_->color = black_;
 
     if (alloc == other.alloc) {
-      end_->left = other.root();
-      end_->right = other.root();
-      if (root() != nil_)
-        root()->parent = end_;
-
-      begin_ = other.begin_;
-      size_ = other.size_;
-
-      other.end_->left = nil_;
-      other.end_->right = nil_;
-      other.begin_ = other.end_;
-      other.size_ = 0;
+      move_tree(other);
     } else {
       end_->left = nil_;
       end_->right = nil_;
@@ -139,7 +118,7 @@ class rb_tree {
   // end of constructors
 
   /* destructor */
-  ~rb_tree() { clear(); }
+  ~rb_tree() noexcept { clear(); }
 
   void clear() noexcept { erase(begin(), end()); }
 
@@ -377,8 +356,9 @@ class rb_tree {
   }
 
   void copy_tree(const rb_tree& other);
+  void copy_sub_tree(node_ptr src, node_ptr dst);
 
-  void copy_tree(node_ptr src, node_ptr dst);
+  void move_tree(rb_tree& other) noexcept;
 
   std::pair <iterator_type, bool> insert_unique(const value_type& val);
   iterator_type insert_unique(node_ptr pos, const value_type& val);
@@ -406,7 +386,6 @@ class rb_tree {
 template <class T, class C, class A>
 void rb_tree<T, C, A>::copy_tree(const rb_tree& other) {
   size_ = other.size_;
-  comp_ = other.comp_;
 
   end_ = &end_node_;
   end_->parent = end_;
@@ -416,7 +395,7 @@ void rb_tree<T, C, A>::copy_tree(const rb_tree& other) {
   if (other.root() != nil_) {
     set_root(create_node(other.root()->value));
     root()->color = other.root()->color;
-    copy_tree(other.root(), root());
+    copy_sub_tree(other.root(), root());
   } else {
     end_->left = nil_;
     end_->right = nil_;
@@ -427,7 +406,7 @@ void rb_tree<T, C, A>::copy_tree(const rb_tree& other) {
 }
 
 template <class T, class C, class A>
-void rb_tree<T, C, A>::copy_tree(node_ptr src, node_ptr dst) {
+void rb_tree<T, C, A>::copy_sub_tree(node_ptr src, node_ptr dst) {
   /*
    * assume src != nil_
    * and dst has been constructed
@@ -436,7 +415,7 @@ void rb_tree<T, C, A>::copy_tree(node_ptr src, node_ptr dst) {
     dst->left = create_node(src->left->value);
     dst->left->color = src->left->color;
     dst->left->parent = dst;
-    copy_tree(src->left, dst->left);
+    copy_sub_tree(src->left, dst->left);
   } else {
     dst->left = nil_;
   }
@@ -445,11 +424,28 @@ void rb_tree<T, C, A>::copy_tree(node_ptr src, node_ptr dst) {
     dst->right = create_node(src->right->value);
     dst->right->color = src->right->color;
     dst->right->parent = dst;
-    copy_tree(src->right, dst->right);
+    copy_sub_tree(src->right, dst->right);
   } else {
     dst->right = nil_;
   }
 
+}
+
+template <class T, class C, class A>
+void rb_tree<T, C, A>::move_tree(rb_tree& other) noexcept {
+  end_->left = other.root();
+  end_->right = other.root();
+
+  if (root() != nil_)
+    root()->parent = end_;
+
+  begin_ = other.begin_;
+  size_ = other.size_;
+
+  other.end_->left = nil_;
+  other.end_->right = nil_;
+  other.begin_ = other.end_;
+  other.size_ = 0;
 }
 
 template <class T, class C, class A>
