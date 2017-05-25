@@ -79,26 +79,9 @@ class rb_tree {
   rb_tree(const rb_tree& other) : rb_tree(other, other.alloc_) { }
 
   rb_tree(const rb_tree& other, const allocator_type& alloc)
-    : size_(other.size_),
-      comp_(other.comp_),
-      alloc_(alloc),
+    : alloc_(alloc),
       node_alloc_(node_allocator_type(alloc)) {
-
-    end_ = &end_node_;
-    end_->parent = end_;
-    end_->color = black_;
-
-    /* root */
-    if (other.root() != nil_) {
-      set_root(create_node(other.root()->value));
-      root()->color = other.root()->color;
-      copy_tree(other.root(), root());
-    } else {
-      end_->left = nil_;
-      end_->right = nil_;
-    }
-
-    begin_ = min_node(root());
+    copy_tree(other);
   }
 
   // move
@@ -393,29 +376,9 @@ class rb_tree {
     return x;
   }
 
-  void copy_tree(node_ptr src, node_ptr dst) {
-    /*
-     * src != nil_
-     * dst has been constructed
-     */
-    if (src->left != nil_) {
-      dst->left = create_node(src->left->value);
-      dst->left->color = src->left->color;
-      dst->left->parent = dst;
-      copy_tree(src->left, dst->left);
-    } else {
-      dst->left = nil_;
-    }
+  void copy_tree(const rb_tree& other);
 
-    if (src->right != nil_) {
-      dst->right = create_node(src->right->value);
-      dst->right->color = src->right->color;
-      dst->right->parent = dst;
-      copy_tree(src->right, dst->right);
-    } else {
-      dst->right = nil_;
-    }
-  }
+  void copy_tree(node_ptr src, node_ptr dst);
 
   std::pair <iterator_type, bool> insert_unique(const value_type& val);
   iterator_type insert_unique(node_ptr pos, const value_type& val);
@@ -439,6 +402,55 @@ class rb_tree {
   equal_range_unique(const key_type& val);
 
 };
+
+template <class T, class C, class A>
+void rb_tree<T, C, A>::copy_tree(const rb_tree& other) {
+  size_ = other.size_;
+  comp_ = other.comp_;
+
+  end_ = &end_node_;
+  end_->parent = end_;
+  end_->color = black_;
+
+  /* root */
+  if (other.root() != nil_) {
+    set_root(create_node(other.root()->value));
+    root()->color = other.root()->color;
+    copy_tree(other.root(), root());
+  } else {
+    end_->left = nil_;
+    end_->right = nil_;
+  }
+
+  begin_ = min_node(root());
+
+}
+
+template <class T, class C, class A>
+void rb_tree<T, C, A>::copy_tree(node_ptr src, node_ptr dst) {
+  /*
+   * assume src != nil_
+   * and dst has been constructed
+   */
+  if (src->left != nil_) {
+    dst->left = create_node(src->left->value);
+    dst->left->color = src->left->color;
+    dst->left->parent = dst;
+    copy_tree(src->left, dst->left);
+  } else {
+    dst->left = nil_;
+  }
+
+  if (src->right != nil_) {
+    dst->right = create_node(src->right->value);
+    dst->right->color = src->right->color;
+    dst->right->parent = dst;
+    copy_tree(src->right, dst->right);
+  } else {
+    dst->right = nil_;
+  }
+
+}
 
 template <class T, class C, class A>
 std::pair <typename rb_tree<T, C, A>::iterator_type, bool>
