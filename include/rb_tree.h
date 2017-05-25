@@ -75,6 +75,11 @@ class rb_tree {
           const allocator_type& alloc = allocator_type())
     : rb_tree(comp, alloc) { insert(first, last); }
 
+  template <class InputIterator>
+  rb_tree(InputIterator first, InputIterator last,
+          const allocator_type& alloc)
+    : rb_tree(key_compare(), alloc) { }
+
   // copy
   rb_tree(const rb_tree& other) : rb_tree(other, other.alloc_) { }
 
