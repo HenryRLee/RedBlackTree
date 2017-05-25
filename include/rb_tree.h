@@ -46,6 +46,8 @@ class rb_tree {
   /*
    * constructors
    */
+
+  // empty
   rb_tree()
     : rb_tree(key_compare(), allocator_type()) { }
 
@@ -66,16 +68,18 @@ class rb_tree {
   explicit rb_tree(const allocator_type& alloc)
     : rb_tree(key_compare(), alloc) { }
 
+  // range
   template <class InputIterator>
   rb_tree(InputIterator first, InputIterator last,
           const key_compare& comp = key_compare(),
           const allocator_type& alloc = allocator_type())
     : rb_tree(comp, alloc) { insert(first, last); }
 
+  // copy
   rb_tree(const rb_tree& other) : rb_tree(other, other.alloc_) { }
 
   rb_tree(const rb_tree& other, const allocator_type& alloc)
-    : size_(0),
+    : size_(other.size_),
       comp_(other.comp_),
       alloc_(alloc),
       node_alloc_(node_allocator_type(alloc)) {
@@ -89,10 +93,66 @@ class rb_tree {
       set_root(create_node(other.root()->value));
       root()->color = other.root()->color;
       copy_tree(other.root(), root());
+    } else {
+      end_->left = nil_;
+      end_->right = nil_;
     }
 
     begin_ = min_node(root());
   }
+
+  // move
+  rb_tree(rb_tree&& other)
+    : size_(other.size_),
+      comp_(other.comp_),
+      alloc_(other.alloc_),
+      node_alloc_(node_allocator_type(other.alloc_)),
+      begin_(other.begin_) {
+
+    end_ = &end_node_;
+    end_->parent = end_;
+    end_->color = black_;
+    end_->left = other.root();
+    end_->right = other.root();
+    if (root() != nil_)
+      root()->parent = end_;
+
+    other.end_->left = nil_;
+    other.end_->right = nil_;
+    other.begin_ = other.end_;
+    other.size_ = 0;
+  }
+
+  rb_tree(rb_tree&& other, const allocator_type& alloc)
+    : comp_(other.comp_),
+      alloc_(alloc),
+      node_alloc_(node_allocator_type(alloc)) {
+
+    end_ = &end_node_;
+    end_->parent = end_;
+    end_->color = black_;
+
+    if (alloc == other.alloc) {
+      end_->left = other.root();
+      end_->right = other.root();
+      if (root() != nil_)
+        root()->parent = end_;
+
+      begin_ = other.begin_;
+      size_ = other.size_;
+
+      other.end_->left = nil_;
+      other.end_->right = nil_;
+      other.begin_ = other.end_;
+      other.size_ = 0;
+    } else {
+      end_->left = nil_;
+      end_->right = nil_;
+      begin_ = end_;
+      size_ = 0;
+    }
+  }
+
   // end of constructors
 
   /* destructor */
